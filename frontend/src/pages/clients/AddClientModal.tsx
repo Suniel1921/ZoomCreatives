@@ -143,33 +143,38 @@ export default function AddClientModal({ isOpen, onClose , getAllClients}: AddCl
   };
 
   const onSubmit = async (data: any) => {
-    // Make API call to create a new client
     try {
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/createClient`, {
-        ...data,
+        name: data.name,
+        category: data.category,
+        status: data.status,
+        email: data.email,
+        password: data.password,
+        phone: data.phone,
+        nationality: data.nationality,
+        postalCode: data.address.postalCode,
+        prefecture: data.address.prefecture,
+        city: data.address.city,
+        street: data.address.street,
+        building: data.address.building,
+        modeOfContact: data.modeOfContact,
+        socialMedia: data.socialMedia,
+        timeline: data.timeline || [],
         dateJoined: new Date().toISOString(),
-        timeline: [],
+        // profilePhoto: data.profilePhoto,
       });
-      // console.log('Client created successfully:', response.data);
-
-      // Optionally, alert the admin about the client creation
-      if (!optionalCategories.includes(data.category)) {
-        toast.success(`Client account created!\n\nUsername: ${data.email}\nPassword: ${data.password}\n\nPlease save these credentials and share them with the client securely.`);
-        getAllClients(); //for auto refrsh the client data
-      }
-
-      // Reset form and close the modal
+  
+      toast.success(`Client created successfully!`);
+      getAllClients();
       reset();
       setProfilePhotoPreview(null);
       onClose();
-    } catch (error:any) {
-      // console.error('Error creating client:', error);
-      if(error.response){
-        toast.error('Failed to create client. Please y agtrain.', error)
-
-      }
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.message || 'Failed to create client. Please try again.';
+      toast.error(errorMessage);
     }
   };
+  
 
   if (!isOpen) return null;
 

@@ -5,11 +5,11 @@ const mongoose = require('mongoose');
 // Define Mongoose schema and model for the application data
 const japanVistiApplicationSchema = new mongoose.Schema({
   clientId: { type: mongoose.Schema.Types.ObjectId, required: true,  ref: 'ClientModel' },
-  step:{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ApplicationStepModel',
-    // required: true,
-  },
+  // step:{
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'ApplicationStepModel',
+  //   // required: true,
+  // },
 
   mobileNo: { type: String, required: true },
   date: { type: Date, required: true },

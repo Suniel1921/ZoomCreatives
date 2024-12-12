@@ -147,12 +147,12 @@ exports.deleteAppointment = async (req, res) => {
       // Fetch data from all models in parallel
       const [application, japanVisit, documentTranslation, epassports, otherServices, graphicDesigns, appointment, ] = await Promise.all([
         applicationModel.find().populate('clientId').populate('step').lean(),
-        japanVisitAppplicaitonModel.find().populate('clientId').populate('step').lean(),
-        documentTranslationModel.find().populate('clientId').populate('step').lean(),
-        ePassportModel.find().populate('clientId').populate('step').lean(),
-        OtherServiceModel.find().populate('clientId').populate('step').lean(),
-        GraphicDesignModel.find().populate('clientId').populate('step').lean(),
-        AppointmentModel.find().populate('clientId').populate('step').lean(),
+        japanVisitAppplicaitonModel.find().populate('clientId').lean(),
+        documentTranslationModel.find().populate('clientId').lean(),
+        ePassportModel.find().populate('clientId').lean(),
+        OtherServiceModel.find().populate('clientId').lean(),
+        GraphicDesignModel.find().populate('clientId').lean(),
+        AppointmentModel.find().populate('clientId').lean(),
 
       ]);
   
