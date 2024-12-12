@@ -67,25 +67,25 @@ NPM or Yarn package manager
 Setup
 Clone the repository to your local machine:
 
-bash
+
 Copy code
-git clone https://github.com/yourusername/zoomcreatives-crm.git
+git clone https://github.com/suniel1921/zoomcreatives-crm.git
 Navigate into the project directory:
 
-bash
+
 Copy code
 cd zoomcreatives-crm
 Install dependencies for both the frontend and backend:
 
 For the backend:
 
-bash
+
 Copy code
 cd backend
 npm install
 For the frontend:
 
-bash
+
 Copy code
 cd frontend
 npm install
@@ -93,27 +93,27 @@ Create an .env file in both the frontend and backend folders with the following 
 
 Backend .env Example:
 
-env
+
 Copy code
 MONGODB_URI=mongodb://localhost:27017/zoomcreatives
 JWT_SECRET=your_jwt_secret_key
 PORT=5000
 Frontend .env Example:
 
-env
+
 Copy code
 REACT_APP_API_URL=http://localhost:5000/api
 Start both the frontend and backend servers:
 
 For the backend:
 
-bash
+
 Copy code
 cd backend
 npm run dev
 For the frontend:
 
-bash
+
 Copy code
 cd frontend
 npm start
