@@ -16,7 +16,7 @@ const japanVistiApplicationSchema = new mongoose.Schema({
   deadline: { type: Date, required: true },
   handledBy: {
     type: String,
-    //  required: true
+     required: true
      },
   package: { type: String, enum: ['Standard Package', 'Premium Package'], required: true },
   noOfApplicants: { type: Number, required: true, min: 1 },
