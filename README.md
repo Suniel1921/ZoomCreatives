@@ -1,4 +1,5 @@
 ZoomCreatives CRM
+
 ZoomCreatives CRM is a customer relationship management system designed to assist clients with various services such as visa inquiries (including Japan visa services), appointment management, and general customer interactions. The system supports multiple user roles, including users, admins, and superadmins, each with a distinct set of functionalities and dashboards.
 
 Built with the MERN stack, ZoomCreatives CRM offers a responsive and modern platform that helps businesses streamline their operations and improve client communication.
