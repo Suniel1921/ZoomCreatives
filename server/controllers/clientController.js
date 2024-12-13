@@ -1,31 +1,102 @@
 
+const upload = require('../config/multerConfig');
 const ClientModel = require('../models/newModel/clientModel');
 const bcrypt = require('bcryptjs'); 
+const cloudinary = require ('cloudinary').v2;
 
 
 
 
-exports.addClient = async (req, res) => {
-  const { name, category, status, email, password, phone, nationality, postalCode, prefecture,
-    city, street, building, modeOfContact, socialMedia, timeline, dateJoined, profilePhoto } = req.body;
 
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+// exports.addClient = async (req, res) => {
+//   const { name, category, status, email, password, phone, nationality, postalCode, prefecture,
+//     city, street, building, modeOfContact, socialMedia, timeline, dateJoined, profilePhoto } = req.body;
 
-    const newClient = new ClientModel({
-      name, category, status, email, password: hashedPassword, phone, nationality, postalCode,
-      prefecture, city, street, building, modeOfContact, socialMedia, timeline, dateJoined,
-      profilePhoto,
-    });
+//   try {
+//     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const savedClient = await newClient.save();
-    res.status(201).json(savedClient);
-  } catch (err) {
-    const errorMessage = err.code === 11000 ? 'Email already exists' : err.message;
-    res.status(400).json({ message: errorMessage });
-  }
-};
+//     const newClient = new ClientModel({
+//       name, category, status, email, password: hashedPassword, phone, nationality, postalCode,
+//       prefecture, city, street, building, modeOfContact, socialMedia, timeline, dateJoined,
+//       profilePhoto,
+//     });
 
+//     const savedClient = await newClient.save();
+//     res.status(201).json(savedClient);
+
+//   } catch (err) {
+//     const errorMessage = err.code === 11000 ? 'Email already exists' : err.message;
+//     res.status(400).json({ message: errorMessage });
+//   }
+// };
+
+
+
+// Add Client Endpoint
+exports.addClient = [
+  upload.array('profilePhoto', 1),
+  async (req, res) => {
+    try {
+      const {
+        name,
+        category,
+        status,
+        email,
+        password,
+        phone,
+        nationality,
+        postalCode,
+        prefecture,
+        city,
+        street,
+        building,
+        modeOfContact,
+        socialMedia,
+        timeline,
+        dateJoined,
+      } = req.body;
+
+      // Hash the password before saving
+  const hashedPassword = await bcrypt.hash(password, 10); // 10 is the salt rounds for bcrypt
+
+      // console.log('req file is',req.files); 
+
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ success: false, message: 'No file uploaded' });
+      }
+
+      const profilePhotoUrls = [];
+      for (const file of req.files) {
+        const result = await cloudinary.uploader.upload(file.path);
+        profilePhotoUrls.push(result.secure_url);
+      }
+
+      const createClient = await ClientModel.create({
+        name,
+        category,
+        status,
+        email,
+        password:hashedPassword,
+        phone,
+        nationality,
+        postalCode,
+        prefecture,
+        city,
+        street,
+        building,
+        modeOfContact,
+        socialMedia,
+        timeline,
+        dateJoined,
+        profilePhoto: profilePhotoUrls[0],
+      });
+
+      return res.status(201).json({ success: true, message: 'Client Created Successfully', createClient });
+    } catch (error) {
+      return res.status(500).json({ success: false, message: 'Internal Server Error', error });
+    }
+  },
+];
 
 
 

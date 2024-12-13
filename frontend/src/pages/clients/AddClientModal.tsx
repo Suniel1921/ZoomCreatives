@@ -142,38 +142,82 @@ export default function AddClientModal({ isOpen, onClose , getAllClients}: AddCl
     });
   };
 
-  const onSubmit = async (data: any) => {
-    try {
-      const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/createClient`, {
-        name: data.name,
-        category: data.category,
-        status: data.status,
-        email: data.email,
-        password: data.password,
-        phone: data.phone,
-        nationality: data.nationality,
-        postalCode: data.address.postalCode,
-        prefecture: data.address.prefecture,
-        city: data.address.city,
-        street: data.address.street,
-        building: data.address.building,
-        modeOfContact: data.modeOfContact,
-        socialMedia: data.socialMedia,
-        timeline: data.timeline || [],
-        dateJoined: new Date().toISOString(),
-        // profilePhoto: data.profilePhoto,
-      });
-  
-      toast.success(`Client created successfully!`);
-      getAllClients();
-      reset();
-      setProfilePhotoPreview(null);
-      onClose();
-    } catch (error: any) {
-      const errorMessage = error.response?.data?.message || 'Failed to create client. Please try again.';
-      toast.error(errorMessage);
-    }
+  const [files, setFiles] = useState([]);
+
+  const handleFileChange = (e:any) => {
+    setFiles(e.target.files);
   };
+ 
+
+
+
+  
+const onSubmit = async (data: any) => {
+  if (files.length === 0) {
+    toast.error('No files selected');
+    return;
+  }
+
+  const toastId = toast.loading('Please wait, Photo is uploading...');
+
+  try {
+    const formData = new FormData();
+
+    formData.append('name', data.name);
+    formData.append('category', data.category);
+    formData.append('status', data.status);
+    formData.append('email', data.email);
+    formData.append('password', data.password);
+    formData.append('phone', data.phone);
+    formData.append('nationality', data.nationality);
+    formData.append('postalCode', data.address.postalCode); 
+    formData.append('prefecture', data.address.prefecture);
+    formData.append('city', data.address.city);
+    formData.append('street', data.address.street);
+    formData.append('building', data.address.building);
+    formData.append('modeOfContact', data.modeOfContact);
+    formData.append('socialMedia', data.socialMedia);
+    formData.append('timeline', data.address.timeline);
+    // formData.append('profilePhoto', data.profilePhoto);
+
+    // Add files
+    for (let i = 0; i < files.length; i++) {
+      formData.append('profilePhoto', files[0]); 
+    }
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/createClient`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+
+    if(response.data.success){
+      // toast.success(response.data.message);
+      toast.success(`Client account created!\n\nUsername: ${data.email}\nPassword: ${data.password}\n\nPlease save these credentials and share them with the client securely.`);
+    getAllClients();
+    reset();
+    setFiles([]);
+    setProfilePhotoPreview(null);
+    onClose();
+    }
+
+    
+  } catch (error: any) {
+    toast.error('Failed to create client. Please try again.');
+  } finally {
+    toast.dismiss(toastId);
+  }
+};
+
+
+
+
+
+
+
+
+
+
   
 
   if (!isOpen) return null;
@@ -192,30 +236,39 @@ export default function AddClientModal({ isOpen, onClose , getAllClients}: AddCl
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="flex flex-col items-center gap-4">
-            <div className="relative w-32 h-32">
-              {profilePhotoPreview ? (
-                <img
-                  src={profilePhotoPreview}
-                  alt="Profile preview"
-                  className="w-full h-full rounded-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
-                  <Upload className="h-8 w-8 text-gray-400" />
-                </div>
-              )}
-              <label className="absolute bottom-0 right-0 bg-brand-yellow rounded-full p-2 cursor-pointer">
-                <Upload className="h-4 w-4" />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleProfilePhotoChange}
-                />
-              </label>
-            </div>
-            <p className="text-sm text-gray-500">Upload profile photo</p>
-          </div>
+          <div className="relative w-32 h-32">
+    {profilePhotoPreview ? (
+      <img
+        src={profilePhotoPreview}
+        alt="Profile preview"
+        className="w-full h-full rounded-full object-cover"
+      />
+    ) : (
+      <div className="w-full h-full rounded-full bg-gray-200 flex items-center justify-center">
+        <Upload className="h-8 w-8 text-gray-400" />
+      </div>
+    )}
+    <label className="absolute bottom-0 right-0 bg-brand-yellow rounded-full p-2 cursor-pointer">
+      <Upload className="h-4 w-4" />
+      <input
+        id="fileInput"
+        name="profilePhoto"
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+    </label>
+  </div>
+  <p className="text-sm text-gray-500">Upload profile photo</p>
+</div>
+
+
+
+
+
+
 
           <div>
             <label className="block text-sm font-medium text-gray-700">Name</label>

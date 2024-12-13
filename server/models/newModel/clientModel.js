@@ -20,7 +20,7 @@ const mongoose = require('mongoose');
 //         required: true,
 //     },
 //     phone: {type: String,
-//         required: false,
+//         required: true,
 //     },
    
 //     nationality: {
@@ -29,23 +29,23 @@ const mongoose = require('mongoose');
 //      },
 //      postalCode : {
 //         type: Number,
-//         required: false,
+//         required: true,
 //     },
 //     prefecture:{
 //         type: String,
-//         required: false,
+//         required: true,
 //     },
 //     city: {
 //         type: String,
-//         required: false,
+//         required: true,
 //     },
 //     street: {
 //         type: String,
-//         required: false,
+//         required: true,
 //     },
 //     building:{
 //         type: String,
-//         required: false,
+//         required: true,
 //     },
 //     contactPreferences: {
 //         type: [String],
@@ -53,7 +53,7 @@ const mongoose = require('mongoose');
 //       },      
 //     facebookProfileURL:{
 //         type: String,
-//         required: false,
+//         required: true,
 //     },  
    
 //     profilePhoto: {
@@ -93,7 +93,12 @@ const clientSchema = new mongoose.Schema({
     socialMedia: { type: Object },
     timeline: { type: Array },
     dateJoined: { type: Date },
-    profilePhoto: { type: String },
+    profilePhoto: { type: String, required: true },
+    role: { 
+      type: String, 
+      enum: ['user', 'admin'], 
+      default: 'user' 
+  }
   }, { timestamps: true });
   
 

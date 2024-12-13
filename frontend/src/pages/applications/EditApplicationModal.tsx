@@ -424,12 +424,12 @@ export default function EditApplicationModal({
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Client and Application Details */}
           <div className="grid grid-cols-2 gap-6">
-            {/* <div>
+            <div>
               <label className="block text-sm font-medium text-gray-700">Client</label>
               <SearchableSelect
                 options={clients.map(client => ({
                   value: client.id,
-                  label: client.name
+                  label: client?.name
                 }))}
                 value={watch('clientId')}
                 onChange={(value) => setValue('clientId', value)}
@@ -437,7 +437,7 @@ export default function EditApplicationModal({
                 className="mt-1"
                 error={errors.clientId?.message}
               />
-            </div> */}
+            </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700">Visa Type</label>

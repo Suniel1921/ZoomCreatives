@@ -251,13 +251,9 @@ const App = () => {
                         <Route path="other-services/*" element={<OtherServicesPage />} />
                         <Route path="accounts/*" element={<AccountsPage />} />
 
-                        {/* If the user is NOT an admin, show reports and appointment */}
-                        {auth?.user?.role !== 'admin' && (
-                            <>
-                                <Route path="reports/*" element={<ReportsPage />} />
-                                <Route path="appointment/*" element={<AppointmentPage />} />
-                            </>
-                        )}
+                        <Route path="reports/*" element={<ReportsPage />} />
+                        <Route path="appointment/*" element={<AppointmentPage />} />
+
                     </Route>
                 </Route>
 
