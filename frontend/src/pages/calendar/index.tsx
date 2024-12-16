@@ -497,7 +497,105 @@ export default function CalendarPage() {
         </div>
 
         {/* Today's Schedule */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Today's Schedule</h2>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Appointments</h3>
+                {fetchedAppointments.length === 0 ? (
+                  <p className="text-sm text-gray-500">No appointments scheduled for today</p>
+                ) : (
+                  <div className="space-y-2">
+                    {fetchedAppointments.map((apt, index) => (
+                      <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded">
+                        <div>
+                          <p className="font-medium">{apt.clientName}</p>
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Clock className="h-4 w-4" />
+                            {apt.time && formatAppointmentTime(apt.time)}
+                            {apt.meetingType === 'online' ? (
+                              <Video className="h-4 w-4" />
+                            ) : (
+                              <MapPin className="h-4 w-4" />
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-600">{apt.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Deadlines</h3>
+                {todayDeadlines.length === 0 ? (
+                  <p className="text-sm text-gray-500">No deadlines for today</p>
+                ) : (
+                  <div className="space-y-2">
+                    {todayDeadlines.map((app, index) => (
+                      <div key={index} className="p-2 bg-red-50 rounded">
+                        <p className="font-medium">{app.clientName}</p>
+                        <p className="text-sm text-red-600">{app.type} - {app.country}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+          
         {/* Upcoming Events */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div className="p-4 border-b border-gray-200">
+              <h2 className="text-lg font-semibold">Upcoming (Next 7 Days)</h2>
+            </div>
+            <div className="p-4 space-y-4">
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Appointments</h3>
+                {upcomingAppointments.length === 0 ? (
+                  <p className="text-sm text-gray-500">No upcoming appointments</p>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingAppointments.map((apt, index) => (
+                      <div key={index} className="p-2 bg-gray-50 rounded">
+                        <div className="flex justify-between">
+                          <p className="font-medium">{apt.clientName}</p>
+                          <p className="text-sm text-gray-600">
+                            {apt.date && format(parseISO(apt.date), 'MMM d')}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-600">{apt.type}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Deadlines</h3>
+                {upcomingDeadlines.length === 0 ? (
+                  <p className="text-sm text-gray-500">No upcoming deadlines</p>
+                ) : (
+                  <div className="space-y-2">
+                    {upcomingDeadlines.map((app, index) => (
+                      <div key={index} className="p-2 bg-red-50 rounded">
+                        <div className="flex justify-between">
+                          <p className="font-medium">{app.clientName}</p>
+                          <p className="text-sm text-red-600">
+                            {app.deadline && format(parseISO(app.deadline), 'MMM d')}
+                          </p>
+                        </div>
+                        <p className="text-sm text-gray-600">{app.type} - {app.country}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
       </div>
 
       <AddAppointmentModal
