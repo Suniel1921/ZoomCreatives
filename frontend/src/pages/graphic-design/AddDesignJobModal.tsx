@@ -90,7 +90,6 @@ export default function AddDesignJobModal({
           headers: {
             'Content-Type': 'application/json',
             // Optionally add authorization headers if needed
-            // 'Authorization': `Bearer ${yourToken}`
           },
         });
   
@@ -267,7 +266,7 @@ export default function AddDesignJobModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="button">
+            <Button type="submit">
               Create Application
             </Button>
           </div>
@@ -276,3 +275,6 @@ export default function AddDesignJobModal({
     </div>
   );
 }
+
+
+

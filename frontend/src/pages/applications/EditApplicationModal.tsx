@@ -284,6 +284,7 @@
 
 //*********NEW CODE********
 
+
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -426,7 +427,8 @@ export default function EditApplicationModal({
           <div className="grid grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">Client</label>
-              <SearchableSelect
+              {/* <p className="mt-1">{application?.clientId?.name}</p> */}
+              {/* <SearchableSelect
                 options={clients.map(client => ({
                   value: client.id,
                   label: client?.name
@@ -436,7 +438,7 @@ export default function EditApplicationModal({
                 placeholder="Select client"
                 className="mt-1"
                 error={errors.clientId?.message}
-              />
+              /> */}
             </div>
 
             <div>
