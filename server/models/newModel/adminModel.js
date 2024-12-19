@@ -1,8 +1,13 @@
-// models/adminModel.js
 const mongoose = require('mongoose');
 
 const adminSchema = new mongoose.Schema(
   {
+     superAdminId: {
+          type: mongoose.Schema.Types.ObjectId,
+          required: true,
+          ref: 'SuperAdminModel',
+        },
+        
     name: {
       type: String,
       required: [true, 'Name is required'],
