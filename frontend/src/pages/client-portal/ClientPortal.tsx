@@ -71,8 +71,8 @@ export default function ClientPortal() {
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
                 <FileText className="h-8 w-8 text-brand-yellow" />
-                <span className="ml-2 text-xl font-semibold hidden sm:inline">Zoom Client's Hub</span>
-                <span className="ml-2 text-xl font-semibold sm:hidden">ZCH</span>
+                <span className="ml-2 text-xl font-semibold hidden sm:inline">Zoom Creatives</span>
+                <span className="ml-2 text-xl font-semibold sm:hidden">Zoom Creatives</span>
               </div>
             </div>
             <div className="flex items-center gap-4">
@@ -112,7 +112,7 @@ export default function ClientPortal() {
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Tasks Section */}
-          <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-4 sm:p-6">
+          <div className="lg:col-span-2 bg-gray-200 rounded-lg shadow-sm p-4 sm:p-6">
             <div className="flex items-center gap-2 mb-6">
               <FileText className="h-6 w-6 text-gray-400" />
               <h2 className="text-xl font-semibold">Tasks at Zoom Creatives</h2>
