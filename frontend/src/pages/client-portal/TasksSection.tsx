@@ -655,6 +655,7 @@
 
 
 // ***********tab testing********
+
 import React, { useState } from 'react';
 import ClientOngoingTask from './ClientOngoingTask';  // Import ClientOngoingTask component
 import PreviousTask from './PreviousTask';  // Import PreviousTask component
@@ -688,19 +689,19 @@ const TasksSection = () => {
       <div className="flex space-x-4 mb-6">
         <button
           onClick={() => handleTabChange('ongoingTasks')}
-          className={`px-4 py-2 rounded-md text-sm font-medium border ${activeTab === 'ongoingTasks' ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-700'}`}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'ongoingTasks' ? 'border-b-2 border-yellow-500 text-yellow-500' : 'border-b-2 border-transparent text-gray-700'}`}
         >
           Ongoing Tasks
         </button>
         <button
           onClick={() => handleTabChange('previousTasks')}
-          className={`px-4 py-2 rounded-md text-sm font-medium border ${activeTab === 'previousTasks' ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-700'}`}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'previousTasks' ? 'border-b-2 border-yellow-500 text-yellow-500' : 'border-b-2 border-transparent text-gray-700'}`}
         >
           Previous Tasks
         </button>
         <button
           onClick={() => handleTabChange('payment')}
-          className={`px-4 py-2 rounded-md text-sm font-medium border ${activeTab === 'payment' ? 'border-yellow-500 text-yellow-500' : 'border-transparent text-gray-700'}`}
+          className={`px-4 py-2 text-sm font-medium ${activeTab === 'payment' ? 'border-b-2 border-yellow-500 text-yellow-500' : 'border-b-2 border-transparent text-gray-700'}`}
         >
           Payment
         </button>
@@ -713,4 +714,3 @@ const TasksSection = () => {
 };
 
 export default TasksSection;
-
