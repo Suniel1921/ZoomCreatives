@@ -16,18 +16,13 @@ const ClientPayment = () => {
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`
         );
 
-        // Extract and combine all model data with model names
+        // Extract all model data without filtering completed tasks
         const allData = response.data.allData;
         const allTasks = Object.keys(allData).flatMap(modelName =>
           allData[modelName].map(task => ({ ...task, modelName }))
         );
 
-        // Filter tasks where all steps are completed
-        const completedTasks = allTasks.filter(task =>
-          task.steps.every(step => step.status === 'completed')
-        );
-
-        setPaymentData(completedTasks); // Corrected the function name to setPaymentData
+        setPaymentData(allTasks); // Set all tasks without filtering
         setLoading(false);
       } catch (err) {
         console.error('Error fetching data:', err);
@@ -37,7 +32,7 @@ const ClientPayment = () => {
         setLoading(false);
       }
     };
-  
+
     fetchData();
   }, [auth.user.id]); // Add auth.user.id as a dependency to refetch data when user ID changes
 
@@ -58,7 +53,7 @@ const ClientPayment = () => {
         <div className="space-y-4">
           {paymentData.map((task: any) => (
             <div key={task._id} className="bg-white rounded-lg p-4">
-              {/* <h4 className="font-medium">{task.modelName}</h4> */}
+              {/* Display model name with the word "Model" removed */}
               <h4 className="font-medium">
                 {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
               </h4>
