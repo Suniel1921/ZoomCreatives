@@ -3,10 +3,10 @@ import axios from 'axios'; // Ensure axios is imported
 import { useAuthGlobally } from '../../context/AuthContext';
 
 const ClientPayment = () => {
-  const [paymentData, setPaymentData] = useState<any>(null); // State to store payment data
-  const [loading, setLoading] = useState<boolean>(true); // Loading state
-  const [error, setError] = useState<string | null>(null); // Error state
-  const [auth] = useAuthGlobally(); // Access user authentication data from context
+  const [paymentData, setPaymentData] = useState<any>(null); 
+  const [loading, setLoading] = useState<boolean>(true); 
+  const [error, setError] = useState<string | null>(null); 
+  const [auth] = useAuthGlobally(); 
 
   // Fetch payment data when the component mounts
   useEffect(() => {
@@ -22,9 +22,9 @@ const ClientPayment = () => {
           allData[modelName].map(task => ({ ...task, modelName }))
         );
 
-        setPaymentData(allTasks); // Set all tasks without filtering
+        setPaymentData(allTasks); 
         setLoading(false);
-      } catch (err) {
+      } catch (err:any) {
         console.error('Error fetching data:', err);
         const errorMessage =
           err.response?.data?.message || 'Failed to fetch data. Please try again later.';
@@ -34,14 +34,14 @@ const ClientPayment = () => {
     };
 
     fetchData();
-  }, [auth.user.id]); // Add auth.user.id as a dependency to refetch data when user ID changes
+  }, [auth.user.id]);
 
   if (loading) {
-    return <div>Loading...</div>; // Display loading text while fetching data
+    return <div>Loading...</div>; 
   }
 
   if (error) {
-    return <div>{error}</div>; // Display error message if fetching fails
+    return <div>{error}</div>; 
   }
 
   return (
@@ -66,7 +66,7 @@ const ClientPayment = () => {
           ))}
         </div>
       ) : (
-        <p>No payment data available.</p> // Message when there's no payment data
+        <p>No payment data available.</p> 
       )}
     </div>
   );
