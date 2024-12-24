@@ -226,23 +226,24 @@ exports.getAllAppointments = async (req, res) => {
 };
 
 // Get an appointment by ID for the authenticated superAdmin
-exports.getAppointmentById = async (req, res) => {
+exports.getAppointmentsByClientId = async (req, res) => {
   try {
-    const { id } = req.params; // Extract appointment ID from request parameters
+    const { clientId } = req.params; // Extract clientId from request parameters
 
-    // Find the appointment by its ID
-    const appointment = await AppointmentModel.findById(id);
+    // Find all appointments with the given clientId
+    const appointments = await AppointmentModel.find({ clientId });
 
-    if (!appointment) {
-      return res.status(404).json({ success: false, message: 'Appointment not found' });
+    if (appointments.length === 0) {
+      return res.status(404).json({ success: false, message: 'No appointments found for the given clientId' });
     }
 
-    res.status(200).json({ success: true, message: 'Appointment fetched successfully', appointment });
+    res.status(200).json({ success: true, message: 'Appointments fetched successfully', appointments });
   } catch (error) {
-    console.error('Error fetching appointment:', error);
-    res.status(500).json({ success: false, message: 'Failed to retrieve appointment', error: error.message });
+    console.error('Error fetching appointments:', error);
+    res.status(500).json({ success: false, message: 'Failed to retrieve appointments', error: error.message });
   }
 };
+
 
 
 // Update an appointment by ID for the authenticated superAdmin
