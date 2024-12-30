@@ -255,6 +255,81 @@ exports.updateClient = async (req, res) => {
 };
 
 
+
+//update client profile from client side
+
+
+// exports.updateClientProfile = async (req, res) => {
+//   try {
+//     // Ensure the user exists (could also be checked in requireLogin if needed)
+//     const userId = req.user.id;  // Get user ID from the token
+//     const { fullName, email, phone } = req.body;  // Destructure data from the request body
+
+//     // Find the user by ID and update
+//     const updatedUser = await ClientModel.findByIdAndUpdate(
+//       userId,
+//       { fullName, email, phone },
+//       { new: true }  // Return the updated document
+//     );
+
+//     // If user is not found
+//     if (!updatedUser) {
+//       return res.status(404).json({ message: 'User not found' });
+//     }
+
+//     // Respond with success and the updated user data
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Profile updated successfully',
+//       updatedClient: updatedUser,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ message: 'Error updating profile', error: error.message });
+//   }
+// };
+
+
+
+// controllers/profileController.js
+exports.updateClientProfile = async (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ message: 'Unauthorized. User not authenticated.' });
+  }
+
+  try {
+    const userId = req.user.id; // Get user ID from the token
+    const { fullName, email, phone } = req.body; // Destructure data from the request body
+
+    const updatedUser = await ClientModel.findByIdAndUpdate(
+      userId,
+      { fullName, email, phone },
+      { new: true } // Return the updated document
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      updatedClient: updatedUser,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error updating profile', error: error.message });
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
 //delete client controller
 exports.deleteClient = async (req, res) => {
   const { _id: superAdminId } = req.user;
