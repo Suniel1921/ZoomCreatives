@@ -31,8 +31,7 @@ const App = () => {
     const [auth] = useAuthGlobally();
     const isOnline = useOnlineOfflineStatus();
 
-    console.log(auth); // Debugging to ensure role is correct
-
+    // console.log(auth); // Debugging to ensure role is correct
     return (
         <Router>
             <Routes>

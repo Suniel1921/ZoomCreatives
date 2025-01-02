@@ -10,11 +10,13 @@ const cloudinary = require ('cloudinary').v2;
 
 //create client controller
 
+// const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
 // exports.addClient = [
 //   upload.array('profilePhoto', 1),
 //   async (req, res) => {
-//     // const { superAdminId } = req.user; // Extract superAdminId from authenticated user
-//     const { _id: superAdminId } = req.user; // Getting user ID from the authenticated user
+//     const { _id: superAdminId } = req.user;
+
 //     if (!superAdminId) {
 //       return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
 //     }
@@ -46,7 +48,13 @@ const cloudinary = require ('cloudinary').v2;
 //       }
 
 //       const profilePhotoUrls = [];
+
+//       // Check file size for profile photo
 //       for (const file of req.files) {
+//         if (file.size > MAX_SIZE) {
+//           return res.status(400).json({ success: false, message: 'Profile photo must be less than 2MB.' });
+//         }
+        
 //         const result = await cloudinary.uploader.upload(file.path);
 //         profilePhotoUrls.push(result.secure_url);
 //       }
@@ -76,12 +84,24 @@ const cloudinary = require ('cloudinary').v2;
 //     } catch (error) {
 //       return res.status(500).json({ success: false, message: 'Internal Server Error', error });
 //     }
-//   },
+//   }
 // ];
 
 
 
+
+
+const nodemailer = require('nodemailer');
 const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+
+// Email configuration
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.MYEMAIL,
+    pass: process.env.PASSWORD, // App password
+  },
+});
 
 exports.addClient = [
   upload.array('profilePhoto', 1),
@@ -125,7 +145,7 @@ exports.addClient = [
         if (file.size > MAX_SIZE) {
           return res.status(400).json({ success: false, message: 'Profile photo must be less than 2MB.' });
         }
-        
+
         const result = await cloudinary.uploader.upload(file.path);
         profilePhotoUrls.push(result.secure_url);
       }
@@ -151,12 +171,35 @@ exports.addClient = [
         profilePhoto: profilePhotoUrls[0],
       });
 
-      return res.status(201).json({ success: true, message: 'Client created successfully', createClient });
+      // Send email with client's details
+      const mailOptions = {
+        from: process.env.MYEMAIL,
+        to: email,
+        subject: 'Welcome to Zoom Creatives!',
+        html: `
+          <h2>Welcome, ${name}!</h2>
+          <p>Your account has been successfully created.</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Password:</strong> ${password}</p>
+          <p>Please keep your login credentials secure.</p>
+        `,
+      };
+
+      await transporter.sendMail(mailOptions);
+
+      return res.status(201).json({
+        success: true,
+        message: 'Client created successfully and email sent',
+        createClient,
+      });
     } catch (error) {
       return res.status(500).json({ success: false, message: 'Internal Server Error', error });
     }
-  }
+  },
 ];
+
+
+
 
 
 
@@ -355,3 +398,198 @@ exports.deleteClient = async (req, res) => {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// *******************cslient fv********************
+
+
+
+
+const fs = require('fs');
+const csvParser = require('csv-parser');
+const multer = require('multer');
+const path = require('path');
+
+
+// Ensure the 'uploads' folder exists
+const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Set up local storage for CSV file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir); // Folder to store uploaded files temporarily
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + '-' + file.originalname); // Ensure unique filenames
+  },
+});
+
+// Multer configuration for CSV upload
+const uploadCSV = multer({
+  storage: storage,
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    if (ext !== '.csv') {
+      return cb(new Error('Only CSV files are allowed'), false);
+    }
+    cb(null, true);
+  }
+});
+
+// Route for uploading CSV file
+exports.UploadCSVFile = [uploadCSV.single('csvFile'), async (req, res) => {
+  // const { superAdminId } = req.user; // Ensure user is authenticated and has super admin role
+  const { _id: superAdminId } = req.user;
+  if (!superAdminId) {
+    return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+  }
+
+  if (!req.file) {
+    return res.status(400).send('No file uploaded');
+  }
+
+  console.log('File uploaded to:', req.file.path); // Log the file path for debugging
+
+  const results = [];
+
+  // Parse the CSV file and store each row
+  fs.createReadStream(req.file.path)
+    .pipe(csvParser())
+    .on('data', (row) => {
+      results.push(row);
+    })
+    .on('end', async () => {
+      try {
+        // Map and save data to the database
+        const clients = results.map((row) => {
+          return {
+            superAdminId, // Attach the superAdminId for each client
+            name: row.name || 'Default Name',   // Ensure name is set, otherwise default
+            email: row.email || 'default@example.com',  // Default email if not provided
+            city: row.city || 'City not provided',  // Default city if not provided
+            status: 'active', // You can adjust this as needed
+          };
+        });
+
+        await ClientModel.insertMany(clients); // Bulk insert data into the database
+        res.status(200).send('CSV data imported successfully');
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Error importing CSV data', error: err });
+      } finally {
+        // Delete the uploaded CSV file after processing
+        if (fs.existsSync(req.file.path)) {
+          fs.unlinkSync(req.file.path);
+        } else {
+          console.log('File not found for deletion:', req.file.path);
+        }
+      }
+    });
+}];
+
+
+
+
+// const fs = require('fs');
+// const csvParser = require('csv-parser');
+// const multer = require('multer');
+// const path = require('path');
+
+
+// // Ensure the 'uploads' folder exists
+// const uploadDir = path.join(__dirname, 'uploads');
+// if (!fs.existsSync(uploadDir)) {
+//   fs.mkdirSync(uploadDir, { recursive: true });
+// }
+
+// // Set up local storage for CSV file uploads
+// const storage = multer.diskStorage({
+//   destination: (req, file, cb) => {
+//     cb(null, uploadDir); // Folder to store uploaded files temporarily
+//   },
+//   filename: (req, file, cb) => {
+//     cb(null, Date.now() + '-' + file.originalname); // Ensure unique filenames
+//   },
+// });
+
+// // Multer configuration for CSV upload
+// const uploadCSV = multer({ 
+//   storage: storage,
+//   fileFilter: (req, file, cb) => {
+//     const ext = path.extname(file.originalname);
+//     if (ext !== '.csv') {
+//       return cb(new Error('Only CSV files are allowed'), false);
+//     }
+//     cb(null, true);
+//   }
+// });
+
+// // Route for uploading CSV file
+// exports.UploadCSVFile = [uploadCSV.single('csvFile'), (req, res) => {
+//   const { _id: superAdminId } = req.user;
+//   if (!superAdminId) {
+//     return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+//   }
+
+//   if (!req.file) {
+//     return res.status(400).send('No file uploaded');
+//   }
+
+//   console.log('File uploaded to:', req.file.path); // Log the file path for debugging
+
+//   const results = [];
+
+//   // Parse the CSV file and store each row
+//   fs.createReadStream(req.file.path)
+//     .pipe(csvParser())
+//     .on('data', (row) => {
+//       results.push(row);
+//     })
+//     .on('end', async () => {
+//       try {
+//         // Map and save data to the database
+//         const clients = results.map((row) => {
+//           return {
+//             name: row.name || 'Default Name',   // Ensure name is set, otherwise default
+//             email: row.email || 'default@example.com',  // Default email if not provided
+//             city: row.city || 'city not found in your CSV file',  // Default address if not provided
+//           };
+//         });
+
+//         await ClientModel.insertMany(clients); // Bulk insert data into the database
+//         res.status(200).send('CSV data imported successfully');
+//       } catch (err) {
+//         console.error(err);
+//         res.status(500).json({sucess: false, message : 'Error importing CSV data', err});
+//       } finally {
+//         // Delete the uploaded CSV file after processing
+//         if (fs.existsSync(req.file.path)) {
+//           fs.unlinkSync(req.file.path);
+//         } else {
+//           console.log('File not found for deletion:', req.file.path);
+//         }
+//       }
+//     });
+// }];
