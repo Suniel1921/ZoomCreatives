@@ -458,47 +458,6 @@ export default function AddApplicationModal({
     fetchHandlers();
   }, []);
 
-  // const onSubmit = async (data: ApplicationFormData) => {
-  //   try {
-  //     const client = clients.find((c) => c._id === data.clientId);
-  //     if (!client) {
-  //       toast.error("Client not found");
-  //       return;
-  //     }
-
-  //     const total =
-  //       data.payment.visaApplicationFee +
-  //       data.payment.translationFee -
-  //       (data.payment.paidAmount + data.payment.discount);
-
-  //     const payload = {
-  //       ...data,
-  //       clientName: client.name,
-  //       familyMembers,
-  //       submissionDate: new Date().toISOString(),
-  //       payment: { ...data.payment, total },
-  //       paymentStatus: total <= 0 ? "Paid" : "Due",
-  //     };
-
-  //     const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
-  //     if (response.data.success) {
-  //       toast.success(response.data.message);
-  //       reset();
-  //       setFamilyMembers([]);
-  //       onClose();
-  //       getAllApplication();
-  //     }
-  //   } catch (error: any) {
-  //     console.error("Error submitting application:", error);
-  //     if (error.response) {
-  //       toast.error(error.response.data.message);
-  //     }
-  //   }
-  // };
-
-
-
-
   const onSubmit = async (data: ApplicationFormData) => {
     try {
       const client = clients.find((c) => c._id === data.clientId);
@@ -515,6 +474,9 @@ export default function AddApplicationModal({
       const payload = {
         ...data,
         clientName: client.name,
+       handledBy: client.handledBy || data.handledBy, // Use client.handledBy if available
+      translationHandler: client.translationHandler || data.translationHandler, // Use client.translationHandler if available
+
         familyMembers, // Ensure family members are sent as part of the payload
         submissionDate: new Date().toISOString(),
         payment: { ...data.payment, total },
@@ -522,6 +484,7 @@ export default function AddApplicationModal({
       };
   
       const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/visaApplication/createVisaApplication`, payload);
+
       if (response.data.success) {
         toast.success(response.data.message);
         reset();
