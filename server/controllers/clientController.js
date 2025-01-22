@@ -18,17 +18,24 @@ const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
     user: process.env.MYEMAIL,
-    pass: process.env.PASSWORD, // App password
+    pass: process.env.PASSWORD, 
   },
 });
+
+
+
+//get all clients controller
 
 exports.addClient = [
   upload.array('profilePhoto', 1),
   async (req, res) => {
-    const { _id: superAdminId } = req.user;
+    const { superAdminId, _id: createdBy, role } = req.user;
 
-    if (!superAdminId) {
-      return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+    // If the user is a superadmin, they don't need superAdminId for client creation
+    // If the user is an admin, ensure superAdminId is provided
+    if (role !== 'superadmin' && (!superAdminId || role !== 'admin')) {
+      console.log('Unauthorized access attempt:', req.user); 
+      return res.status(403).json({ success: false, message: 'Unauthorized: Access denied.' });
     }
 
     try {
@@ -52,16 +59,8 @@ exports.addClient = [
       } = req.body;
 
       const hashedPassword = await bcrypt.hash(password, 10);
- 
-
-      //client photo is optinal
-      // if (!req.files || req.files.length === 0) {
-      //   return res.status(400).json({ success: false, message: 'No file uploaded' });
-      // }
 
       const profilePhotoUrls = [];
-
-      // Check file size for profile photo
       for (const file of req.files) {
         if (file.size > MAX_SIZE) {
           return res.status(400).json({ success: false, message: 'Profile photo must be less than 2MB.' });
@@ -71,8 +70,14 @@ exports.addClient = [
         profilePhotoUrls.push(result.secure_url);
       }
 
+      // If the user is a superadmin, set superAdminId directly to the superadmin's ID
+      // If the user is an admin, superAdminId will come from the req.user (the current logged-in superadmin)
+      const clientSuperAdminId = role === 'superadmin' ? createdBy : superAdminId;
+
+      // Create the client with the correct superAdminId
       const createClient = await ClientModel.create({
-        superAdminId,
+        superAdminId: clientSuperAdminId,  // set superAdminId
+        createdBy,     // Track the admin who created this client
         name,
         category,
         status,
@@ -92,28 +97,13 @@ exports.addClient = [
         profilePhoto: profilePhotoUrls[0],
       });
 
-      // Send email with client's details
-      const mailOptions = {
-        from: process.env.MYEMAIL,
-        to: email,
-        subject: 'Welcome to Zoom Creatives!',
-        html: `
-          <h2>Welcome, ${name}!</h2>
-          <p>Your account has been successfully created.</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Password:</strong> ${password}</p>
-          <p>Please keep your login credentials secure.</p>
-        `,
-      };
-
-      await transporter.sendMail(mailOptions);
-
       return res.status(201).json({
         success: true,
-        message: 'Client created successfully and email sent',
+        message: 'Client created successfully',
         createClient,
       });
     } catch (error) {
+      console.error('Error creating client:', error.message);
       return res.status(500).json({ success: false, message: 'Internal Server Error', error });
     }
   },
@@ -124,25 +114,63 @@ exports.addClient = [
 
 
 
-//get all clients controller
 exports.getClients = async (req, res) => {
-  const { _id: superAdminId } = req.user;  
-  
-  if (!superAdminId) {
-    return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+  const { _id, role, superAdminId } = req.user;
+
+  if (!role || (role !== 'superadmin' && role !== 'admin')) {
+    return res.status(403).json({ success: false, message: 'Unauthorized: Access denied.' });
   }
 
   try {
-    // Fetch clients where the superAdminId matches the logged-in user's superAdminId
-    const clients = await ClientModel.find({ superAdminId }); 
-    res.json({ success: true, clients });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
+    let query = {};
+
+    if (role === 'superadmin') {
+      // SuperAdmin: Fetch all clients under their `superAdminId`
+      query = { superAdminId: _id };
+    } else if (role === 'admin') {
+      // Admin: Fetch clients created by the admin or under their `superAdminId`
+      query = { $or: [{ createdBy: _id }, { superAdminId }] };
+    }
+
+    const clients = await ClientModel.find(query)
+      .populate('createdBy', 'name email') // Populate who created the client
+      .exec();
+
+    return res.status(200).json({
+      success: true,
+      clients,
+    });
+  } catch (error) {
+    console.error('Error fetching clients:', error.message);
+    return res.status(500).json({ success: false, message: 'Internal Server Error', error });
   }
 };
 
 
+// exports.getClients = async (req, res) => {
+//   const { _id: superAdminId } = req.user;  
+  
+//   if (!superAdminId) {
+//     return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+//   }
+
+//   try {
+//     // Fetch clients where the superAdminId matches the logged-in user's superAdminId
+//     const clients = await ClientModel.find({ superAdminId }); 
+//     res.json({ success: true, clients });
+//   } catch (err) {
+//     res.status(500).json({ success: false, message: err.message });
+//   }
+// };
+
+
 //get client by id controller
+
+
+
+
+
+
 exports.getClientById = async (req, res) => {
   const { _id: superAdminId } = req.user;
   if (!superAdminId) {
@@ -181,7 +209,7 @@ exports.updateClient = async (req, res) => {
       category,
       status,
       email,
-      password,
+      // password,
       phone,
       nationality,
       postalCode,
@@ -207,9 +235,9 @@ exports.updateClient = async (req, res) => {
     client.modeOfContact = modeOfContact || client.modeOfContact;
     client.socialMedia = socialMedia || client.socialMedia;
 
-    if (password) {
-      client.password = await bcrypt.hash(password, 10); 
-    }
+    // if (password) {
+    //   client.password = await bcrypt.hash(password, 10); 
+    // }
 
     const updatedClient = await client.save();
     res.status(200).json({ success: true, message: 'Client updated successfully.', updatedClient });
@@ -340,7 +368,7 @@ exports.deleteClient = async (req, res) => {
 
 
 
-// *******************cslient fv********************
+// *******************clients import(csv file)  ********************
 
 
 
@@ -382,10 +410,18 @@ const uploadCSV = multer({
 // Route for uploading CSV file
 exports.UploadCSVFile = [uploadCSV.single('csvFile'), async (req, res) => {
   // const { superAdminId } = req.user; // Ensure user is authenticated and has super admin role
-  const { _id: superAdminId } = req.user;
-  if (!superAdminId) {
-    return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+  const { superAdminId, _id: createdBy, role } = req.user;
+
+  // Role-based check: Only 'superadmin' or 'admin' are allowed
+  if (role !== "superadmin" && (!superAdminId || role !== "admin")) {
+    console.log("Unauthorized access attempt:", req.user); // Log for debugging
+    return res
+      .status(403)
+      .json({ success: false, message: "Unauthorized: Access denied." });
   }
+
+  // If the user is a superadmin, use their userId as superAdminId
+  const clientSuperAdminId = role === "superadmin" ? createdBy : superAdminId;
 
   if (!req.file) {
     return res.status(400).send('No file uploaded');
@@ -406,11 +442,13 @@ exports.UploadCSVFile = [uploadCSV.single('csvFile'), async (req, res) => {
         // Map and save data to the database
         const clients = results.map((row) => {
           return {
-            superAdminId, // Attach the superAdminId for each client
-            name: row.name || 'Default Name',   // Ensure name is set, otherwise default
+            superAdminId: clientSuperAdminId,
+            createdBy, 
+            name: row.name || 'Default Name',   
             email: row.email || 'default@example.com',  // Default email if not provided
             city: row.city || 'City not provided',  // Default city if not provided
             status: 'active', // You can adjust this as needed
+            phone : row.phone,
           };
         });
 

@@ -67,9 +67,10 @@ export default function TranslationsPage() {
 
   const handleCopyName = (translation: Translation) => {
     navigator.clipboard.writeText(translation.nameInTargetScript);
-    setCopiedId(translation.id);
-    setTimeout(() => setCopiedId(null), 2000);
+    setCopiedId(translation._id); // Set the ID of the clicked row
+    setTimeout(() => setCopiedId(null), 2000); // Reset the state after 2 seconds
   };
+
 
   
 
@@ -178,18 +179,20 @@ export default function TranslationsPage() {
       label: 'Actions',
       render: (_: string, item: Translation) => (
         <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleCopyName(item)}
-            title="Copy Name in Target Script"
-          >
-            {copiedId === item.id ? (
-              <Check className="h-4 w-4 text-green-500" />
-            ) : (
-              <Copy className="h-4 w-4" />
-            )}
-          </Button>
+              <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleCopyName(item)} // Pass the specific row data
+          title="Copy Name in Target Script"
+        >
+          {copiedId === item._id ? ( // Only show the check icon for the clicked row
+            <Check className="h-4 w-4 text-green-500" />
+          ) : (
+            <Copy className="h-4 w-4" />
+          )}
+        </Button>
+
+
           <Button
             variant="outline"
             size="sm"
@@ -247,7 +250,7 @@ export default function TranslationsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="rounded-md border-gray-300 shadow-sm focus:border-brand-yellow focus:ring-brand-yellow"
+              className="flex h-10 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm shadow-sm transition-colors duration-200 placeholder:text-gray-500 focus:border-brand-yellow focus:outline-none focus:ring-2 focus:ring-brand-yellow/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 w-64"
             >
               <option value="all">All Status</option>
               <option value="Not Started">Not Started</option>

@@ -1,22 +1,71 @@
 const ServiceRequestModel = require('../models/newModel/serviceRequestModel');
+const mongoose = require('mongoose');
+
 
 
 // Create a new service request
+// exports.createServiceRequest = async (req, res) => {
+//   try {
+//     const { clientId, clientName, phoneNumber, serviceId, serviceName, message } = req.body;
+
+//     // Include superAdminId if available
+//     const superAdminId = req.user ? req.user._id : null;
+
+//     if (!clientName || !phoneNumber || !serviceName || !message) {
+//       return res.status(400).json({ error: 'All fields are required.' });
+//     }
+
+//     // Create a new service request and include clientId
+//     const newRequest = new ServiceRequestModel({
+//       superAdminId,
+//       clientId,  // clientId is included here
+//       clientName,
+//       phoneNumber,
+//       serviceId,
+//       serviceName,
+//       message,
+//     });
+
+//     await newRequest.save();
+//     res.status(201).json({ message: 'Service request created successfully.', data: newRequest });
+//   } catch (error) {
+//     console.error('Error creating service request:', error);
+//     res.status(500).json({ error: 'Failed to create service request.' });
+//   }
+// };
+
+
+// //Get all service requests Controller
+// exports.getAllServiceRequests = async (req, res) => {
+//   try {
+//     const requests = await ServiceRequestModel.find().sort({ createdAt: -1 });
+//     res.status(200).json({ data: requests });
+//   } catch (error) {
+//     console.error('Error fetching service requests:', error);
+//     res.status(500).json({ error: 'Failed to fetch service requests.' });
+//   }
+// };
+
+
+
+
+
+
+
+
 exports.createServiceRequest = async (req, res) => {
   try {
     const { clientId, clientName, phoneNumber, serviceId, serviceName, message } = req.body;
 
-    // Include superAdminId if available
     const superAdminId = req.user ? req.user._id : null;
 
     if (!clientName || !phoneNumber || !serviceName || !message) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
 
-    // Create a new service request and include clientId
     const newRequest = new ServiceRequestModel({
       superAdminId,
-      clientId,  // clientId is included here
+      clientId,
       clientName,
       phoneNumber,
       serviceId,
@@ -25,6 +74,17 @@ exports.createServiceRequest = async (req, res) => {
     });
 
     await newRequest.save();
+
+    // Emit notification to connected clients
+    req.io.emit('newServiceRequest', {
+      clientId,
+      clientName,
+      phoneNumber,
+      serviceName,
+      message,
+      createdAt: newRequest.createdAt,
+    });
+
     res.status(201).json({ message: 'Service request created successfully.', data: newRequest });
   } catch (error) {
     console.error('Error creating service request:', error);
@@ -36,11 +96,17 @@ exports.createServiceRequest = async (req, res) => {
 
 
 
-
-//Get all service requests Controller
+// Get all service requests Controller
 exports.getAllServiceRequests = async (req, res) => {
   try {
     const requests = await ServiceRequestModel.find().sort({ createdAt: -1 });
+
+    // Emit notification to connected clients (only when requests are fetched successfully)
+    req.io.emit('newServiceRequests', {
+      message: 'New service requests fetched.',
+      data: requests,
+    });
+
     res.status(200).json({ data: requests });
   } catch (error) {
     console.error('Error fetching service requests:', error);
@@ -49,16 +115,22 @@ exports.getAllServiceRequests = async (req, res) => {
 };
 
 
+
+
+
+
+
+
 // Get a single service request by ID
 exports.getServiceRequestById = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { clientId } = req.params; // Assuming the URL param is clientId
 
-    const request = await ServiceRequestModel.find({ id, }); 
-    console.log(request)
+    // Fetch the service request based on clientId
+    const request = await ServiceRequestModel.findOne({ clientId });
 
     if (!request) {
-      return res.status(404).json({ error: 'Service request not found .' });
+      return res.status(404).json({ error: 'Service request not found.' });
     }
 
     res.status(200).json({ data: request });
@@ -70,13 +142,12 @@ exports.getServiceRequestById = async (req, res) => {
 
 
 
-// Update a service request status Controller
-const mongoose = require('mongoose');
 
+// Update a service request status Controller
 
 exports.updateServiceRequestStatus = async (req, res) => {
   try {
-    const { id } = req.params; // Expecting the `id` from the route parameter
+    const { id } = req.params; 
     const { status } = req.body;
 
     // Validate if the id is a valid ObjectId
@@ -91,7 +162,7 @@ exports.updateServiceRequestStatus = async (req, res) => {
 
     // Update the service request status
     const updatedRequest = await ServiceRequestModel.findOneAndUpdate(
-      { _id: id }, // MongoDB will use the provided id for matching the document
+      { _id: id },
       { status },
       { new: true }
     );
@@ -114,7 +185,7 @@ exports.deleteServiceRequest = async (req, res) => {
     const { _id: superAdminId } = req.user; 
     const { id } = req.params;
 
-    const deletedRequest = await ServiceRequestModel.findOneAndDelete({ _id: id, superAdminId }); // Verify superAdminId ownership
+    const deletedRequest = await ServiceRequestModel.findOneAndDelete({ _id: id, superAdminId });
 
     if (!deletedRequest) {
       return res.status(404).json({ error: 'Service request not found or you do not have access to it.' });

@@ -1,38 +1,46 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useAuthGlobally } from '../../context/AuthContext';
+import Confetti from 'react-confetti'; // Import the Confetti component
 
 const PreviousTask = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [auth, setAuth] = useAuthGlobally();
+  const [auth] = useAuthGlobally();
+  const [showConfetti, setShowConfetti] = useState(false); // State to control confetti
 
-  // Fetch data for tasks when the component mounts
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`
         );
-    
-        console.log('API Response:', response.data);
-    
-        // Extract arrays from response.data.allData
-        const { ApplicationModel = [], GraphicDesignModel = [], OtherServiceModel = [] } =
-          response.data.allData;
-    
-        // Combine all tasks into a single array
-        const allTasks = [...ApplicationModel, ...GraphicDesignModel, ...OtherServiceModel];
-    
-        // Filter tasks where all steps have status 'completed'
+
+        // Extract and combine all model data with model names
+        const allData = response.data.allData;
+        const allTasks = Object.keys(allData).flatMap(modelName =>
+          allData[modelName].map(task => ({ ...task, modelName }))
+        );
+
+        // Filter tasks where all steps are completed
         const completedTasks = allTasks.filter(task =>
           task.steps.every(step => step.status === 'completed')
         );
-    
+
         setTasks(completedTasks);
         setLoading(false);
-      } catch (err) {
+
+        // Check if all tasks are completed and trigger confetti
+        if (completedTasks.length === allTasks.length) {
+          // setShowConfetti(true);
+
+          // Hide the confetti after 2 seconds
+          setTimeout(() => {
+            // setShowConfetti(false);
+          }, 4000);
+        }
+      } catch (err: any) {
         console.error('Error fetching data:', err);
         const errorMessage =
           err.response?.data?.message || 'Failed to fetch data. Please try again later.';
@@ -40,30 +48,31 @@ const PreviousTask = () => {
         setLoading(false);
       }
     };
-    
-    
 
     fetchData();
   }, [auth.user.id]);
 
   if (loading) {
-    return <div>Loading...</div>; // Loading state
+    return <div>Loading...</div>;
   }
 
   if (error) {
-    return <div>{error}</div>; // Error state
+    return <div>{error}</div>;
   }
 
   return (
     <div>
-      {/* <h1>Completed Tasks</h1> */}
+      {/* Render confetti when all tasks are completed */}
+      {showConfetti && <Confetti />}
+
       {tasks.length > 0 ? (
         <div className="space-y-4">
-          {tasks.map((task) => (
+          {tasks.map(task => (
             <div key={task._id} className="bg-white rounded-lg p-4">
-              <h4 className="font-medium">{task?.type || task?.applicationType}</h4>
-              <h3>{task.country}</h3>
-              <p className="text-sm text-gray-500">All Steps Completed</p>
+              <h4 className="font-medium">
+                {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
+              </h4>
+              <p className="text-sm text-gray-500">Completed</p>
             </div>
           ))}
         </div>
@@ -84,6 +93,8 @@ export default PreviousTask;
 
 
 
+
+
 // import React, { useEffect, useState } from 'react';
 // import axios from 'axios';
 // import { useAuthGlobally } from '../../context/AuthContext';
@@ -92,29 +103,33 @@ export default PreviousTask;
 //   const [tasks, setTasks] = useState([]);
 //   const [loading, setLoading] = useState(true);
 //   const [error, setError] = useState(null);
-//   const [auth] = useAuthGlobally();
+//   const [auth, setAuth] = useAuthGlobally();
 
+//   // Fetch data for tasks when the component mounts
 //   useEffect(() => {
 //     const fetchData = async () => {
 //       try {
 //         const response = await axios.get(
 //           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllModelDataByID/${auth.user.id}`
 //         );
-
-//         // Extract and combine all model data with model names
-//         const allData = response.data.allData;
-//         const allTasks = Object.keys(allData).flatMap(modelName =>
-//           allData[modelName].map(task => ({ ...task, modelName }))
-//         );
-
-//         // Filter tasks where all steps are completed
+    
+//         console.log('API Response:', response.data);
+    
+//         // Extract arrays from response.data.allData
+//         const { ApplicationModel = [], GraphicDesignModel = [], OtherServiceModel = [] } =
+//           response.data.allData;
+    
+//         // Combine all tasks into a single array
+//         const allTasks = [...ApplicationModel, ...GraphicDesignModel, ...OtherServiceModel];
+    
+//         // Filter tasks where all steps have status 'completed'
 //         const completedTasks = allTasks.filter(task =>
 //           task.steps.every(step => step.status === 'completed')
 //         );
-
+    
 //         setTasks(completedTasks);
 //         setLoading(false);
-//       } catch (err:any) {
+//       } catch (err) {
 //         console.error('Error fetching data:', err);
 //         const errorMessage =
 //           err.response?.data?.message || 'Failed to fetch data. Please try again later.';
@@ -122,16 +137,18 @@ export default PreviousTask;
 //         setLoading(false);
 //       }
 //     };
+    
+    
 
 //     fetchData();
 //   }, [auth.user.id]);
 
 //   if (loading) {
-//     return <div>Loading...</div>;
+//     return <div>Loading...</div>; // Loading state
 //   }
 
 //   if (error) {
-//     return <div>{error}</div>;
+//     return <div>{error}</div>; // Error state
 //   }
 
 //   return (
@@ -139,14 +156,11 @@ export default PreviousTask;
 //       {/* <h1>Completed Tasks</h1> */}
 //       {tasks.length > 0 ? (
 //         <div className="space-y-4">
-//           {tasks.map(task => (
+//           {tasks.map((task) => (
 //             <div key={task._id} className="bg-white rounded-lg p-4">
-//               <h4 className="font-medium">
-//                 {task.modelName.replace('Model', '')} {/* Remove the word "Model" */}
-//               </h4>
-//               {/* <h3>{task.type || task.applicationType}</h3> */}
-//               {/* <p>{task.country}</p> */}
-//               <p className="text-sm text-gray-500">Completed</p>
+//               <h4 className="font-medium">{task?.type || task?.applicationType}</h4>
+//               <h3>{task.country}</h3>
+//               <p className="text-sm text-gray-500">All Steps Completed</p>
 //             </div>
 //           ))}
 //         </div>
@@ -158,3 +172,4 @@ export default PreviousTask;
 // };
 
 // export default PreviousTask;
+
