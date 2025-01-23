@@ -109,10 +109,26 @@ export default function OngoingTasks() {
       amount: task.amount || 0,
       paymentStatus: task.paymentStatus || 'Due'
     }))
-  ].filter(task => {
+  ]
+    .filter(task => {
+      // Ensure the task has a client
+      const hasClient = task.clientName || task?.clientId?.name;
+      if (!hasClient) return false;
+  
+      // Apply payment filter
+      const matchesPaymentFilter =
+        paymentFilter === 'all' ||
+        task.paymentStatus.toLowerCase() === paymentFilter;
+  
+      return matchesPaymentFilter;
+    })
+    .sort((a, b) => {
+      const dateA = safeParse(a.deadline);
+      const dateB = safeParse(b.deadline);
+      return (dateA?.getTime() || 0) - (dateB?.getTime() || 0);
+    }).filter(task => {
     // Apply payment filter
-    const matchesPaymentFilter = paymentFilter === 'all' || 
-                                 task.paymentStatus.toLowerCase() === paymentFilter;
+    const matchesPaymentFilter = paymentFilter === 'all' ||  task.paymentStatus.toLowerCase() === paymentFilter;
     return matchesPaymentFilter;
   }).sort((a, b) => {
     const dateA = safeParse(a.deadline);
@@ -149,6 +165,8 @@ export default function OngoingTasks() {
           </select>
         </div>
       </div>
+
+
 
       {paginatedTasks.length === 0 ? (
         <div className="text-center py-8 text-gray-500">
@@ -261,7 +279,6 @@ export default function OngoingTasks() {
     </div>
   );
 }
-
 
 
 
