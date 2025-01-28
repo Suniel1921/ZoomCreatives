@@ -186,17 +186,15 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: ["https://crm.zoomcreatives.jp", "http://localhost:5173"], 
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true, // This is crucial for allowing credentials
-  }),
-)
+    origin: "https://crm.zoomcreatives.jp", // Allow requests from the frontend domain
+    credentials: true, // Allow cookies and credentials
+  })
+);
 
 
 // app.use(cors());
 // Handle preflight requests
-app.options("*", cors())
+// app.options("*", cors())
 
 
 

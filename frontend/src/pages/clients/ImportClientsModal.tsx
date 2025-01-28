@@ -13,32 +13,32 @@ export default function ImportClientsModal({
   const [loading, setLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.preventDefault();
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
-
+  
     if (!file) {
       return toast.error("Please select a file");
     }
-
+  
     try {
-      setLoading(true);
       Papa.parse(file, {
         complete: async (results) => {
           const csvData = results.data.map(row => row.join(',')).join('\n');
-          const response = await axios.post(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`, {
-            csvData,
-          }, {
-            headers: {
-              "Content-Type": "application/json",
-            },
-            withCredentials: true,
-          });
-
+          console.log("CSV Data:", csvData); // Debugging
+  
+          const response = await axios.post(
+            `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/uploadCsvFile`,
+            { csvData },
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+              withCredentials: true,
+            }
+          );
+  
           if (response.data.success) {
-            getAllClients();
             toast.success("CSV data imported successfully");
-            onClose();
           }
         },
         header: false,
@@ -46,8 +46,6 @@ export default function ImportClientsModal({
     } catch (err) {
       console.error("Error uploading CSV:", err);
       toast.error("Error importing CSV data");
-    } finally {
-      setLoading(false);
     }
   };
 
