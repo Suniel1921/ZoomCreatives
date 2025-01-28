@@ -18,8 +18,15 @@ router.put('/updateClientProfile/:id', requireLogin, controller.updateClientProf
 router.delete('/deleteClient/:id', requireLogin, controller.deleteClient);
 
 
-router.post('/uploadCsvFile', requireLogin, controller.UploadCSVFile);
-// router.post('/uploadCsvFile', upload.single('csvFile'), clientController.UploadCSVFile);
+router.post('/uploadCsvFile', requireLogin, controller.uploadCSVFile);
+
+
+// New route to fetch categories
+router.get('/getCategories', controller.getCategories);
+
+// routes/clientRoutes.js
+router.post('/sendEmailByCategory', controller.sendEmailByCategory);
+
 
 
 module.exports = router;

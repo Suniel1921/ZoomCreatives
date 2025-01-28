@@ -23,7 +23,6 @@ const transporter = nodemailer.createTransport({
 });
 
 
-
 //get all clients controller
 
 exports.addClient = [
@@ -32,7 +31,6 @@ exports.addClient = [
     const { superAdminId, _id: createdBy, role } = req.user;
 
     // If the user is a superadmin, they don't need superAdminId for client creation
-    // If the user is an admin, ensure superAdminId is provided
     if (role !== 'superadmin' && (!superAdminId || role !== 'admin')) {
       console.log('Unauthorized access attempt:', req.user); 
       return res.status(403).json({ success: false, message: 'Unauthorized: Access denied.' });
@@ -70,14 +68,13 @@ exports.addClient = [
         profilePhotoUrls.push(result.secure_url);
       }
 
-      // If the user is a superadmin, set superAdminId directly to the superadmin's ID
       // If the user is an admin, superAdminId will come from the req.user (the current logged-in superadmin)
       const clientSuperAdminId = role === 'superadmin' ? createdBy : superAdminId;
 
       // Create the client with the correct superAdminId
       const createClient = await ClientModel.create({
-        superAdminId: clientSuperAdminId,  // set superAdminId
-        createdBy,     // Track the admin who created this client
+        superAdminId: clientSuperAdminId, 
+        createdBy,     
         name,
         category,
         status,
@@ -133,7 +130,7 @@ exports.getClients = async (req, res) => {
     }
 
     const clients = await ClientModel.find(query)
-      .populate('createdBy', 'name email') // Populate who created the client
+      .populate('createdBy', 'name email')
       .exec();
 
     return res.status(200).json({
@@ -146,25 +143,6 @@ exports.getClients = async (req, res) => {
   }
 };
 
-
-// exports.getClients = async (req, res) => {
-//   const { _id: superAdminId } = req.user;  
-  
-//   if (!superAdminId) {
-//     return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
-//   }
-
-//   try {
-//     // Fetch clients where the superAdminId matches the logged-in user's superAdminId
-//     const clients = await ClientModel.find({ superAdminId }); 
-//     res.json({ success: true, clients });
-//   } catch (err) {
-//     res.status(500).json({ success: false, message: err.message });
-//   }
-// };
-
-
-//get client by id controller
 
 
 
@@ -188,63 +166,6 @@ exports.getClientById = async (req, res) => {
   }
 };
 
-
-
-
-//update client controller
-// exports.updateClient = async (req, res) => {
-//   const { _id: superAdminId } = req.user;
-//   if (!superAdminId) {
-//     return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
-//   }
-
-//   try {
-//     const client = await ClientModel.findById(req.params.id);
-//     if (!client) {
-//       return res.status(404).json({ success: false, message: 'Client not found.' });
-//     }
-
-//     const {
-//       name,
-//       category,
-//       status,
-//       email,
-//       // password,
-//       phone,
-//       nationality,
-//       postalCode,
-//       prefecture,
-//       city,
-//       street,
-//       building,
-//       modeOfContact,
-//       socialMedia,
-//     } = req.body;
-
-//     client.name = name || client.name;
-//     client.category = category || client.category;
-//     client.status = status || client.status;
-//     client.email = email || client.email;
-//     client.phone = phone || client.phone;
-//     client.nationality = nationality || client.nationality;
-//     client.postalCode = postalCode || client.postalCode;
-//     client.prefecture = prefecture || client.prefecture;
-//     client.city = city || client.city;
-//     client.street = street || client.street;
-//     client.building = building || client.building;
-//     client.modeOfContact = modeOfContact || client.modeOfContact;
-//     client.socialMedia = socialMedia || client.socialMedia;
-
-//     // if (password) {
-//     //   client.password = await bcrypt.hash(password, 10); 
-//     // }
-
-//     const updatedClient = await client.save();
-//     res.status(200).json({ success: true, message: 'Client updated successfully.', updatedClient });
-//   } catch (err) {
-//     res.status(400).json({ success: false, message: 'Error updating client. Please try again later.', error: err });
-//   }
-// };
 
 
 
@@ -297,7 +218,7 @@ exports.updateClient = async (req, res) => {
 
     // Exclude sensitive fields from the response
     const responseClient = updatedClient.toObject();
-    delete responseClient.password; // Explicitly remove password if it exists
+    delete responseClient.password; 
 
     res.status(200).json({ success: true, message: 'Client updated successfully.', updatedClient: responseClient });
   } catch (err) {
@@ -319,13 +240,13 @@ exports.updateClientProfile = async (req, res) => {
   }
 
   try {
-    const userId = req.user.id; // Get user ID from the token
-    const { fullName, email, phone } = req.body; // Destructure data from the request body
+    const userId = req.user.id; 
+    const { fullName, email, phone } = req.body; 
 
     const updatedUser = await ClientModel.findByIdAndUpdate(
       userId,
       { fullName, email, phone },
-      { new: true } // Return the updated document
+      { new: true } 
     );
 
     if (!updatedUser) {
@@ -374,9 +295,53 @@ exports.deleteClient = async (req, res) => {
 
 
 
+//get all client category
+exports.getCategories = async (req, res) => {
+  try {
+    const categories = await ClientModel.distinct('category');
+    res.status(200).json({ success: true, categories });
+  } catch (error) {
+    console.error('Error fetching categories:', error.message);
+    res.status(500).json({ success: false, message: 'Internal Server Error', error });
+  }
+};
 
+//sending email to the selected client category
+exports.sendEmailByCategory = async (req, res) => {
+  const { category, subject, message } = req.body;
 
+  if (!category || !subject || !message) {
+    return res.status(400).json({ success: false, message: 'Category, subject, and message are required.' });
+  }
 
+  try {
+    // Fetch all users in the selected category
+    const clients = await ClientModel.find({ category });
+
+    if (clients.length === 0) {
+      return res.status(404).json({ success: false, message: 'No users found in this category.' });
+    }
+
+    // Send email to each user
+    const emailPromises = clients.map((client) => {
+      const mailOptions = {
+        from: process.env.MYEMAIL,
+        to: client.email,
+        subject,
+        html: message, // Use HTML content for the email body
+      };
+
+      return transporter.sendMail(mailOptions);
+    });
+
+    await Promise.all(emailPromises);
+
+    res.status(200).json({ success: true, message: 'Emails sent successfully.' });
+  } catch (error) {
+    console.error('Error sending emails:', error.message);
+    res.status(500).json({ success: false, message: 'Internal Server Error', error });
+  }
+};
 
 
 
@@ -402,183 +367,57 @@ exports.deleteClient = async (req, res) => {
 
 
 
-
-const fs = require('fs');
-const csvParser = require('csv-parser');
-const multer = require('multer');
-const path = require('path');
-
-
-// Ensure the 'uploads' folder exists
-const uploadDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-// Set up local storage for CSV file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir); // Folder to store uploaded files temporarily
-  },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + file.originalname); // Ensure unique filenames
-  },
-});
-
-// Multer configuration for CSV upload
-const uploadCSV = multer({
-  storage: storage,
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    if (ext !== '.csv') {
-      return cb(new Error('Only CSV files are allowed'), false);
-    }
-    cb(null, true);
-  }
-});
-
-// Route for uploading CSV file
-exports.UploadCSVFile = [uploadCSV.single('csvFile'), async (req, res) => {
-  // const { superAdminId } = req.user; // Ensure user is authenticated and has super admin role
+exports.uploadCSVFile = async (req, res) => {
   const { superAdminId, _id: createdBy, role } = req.user;
 
   // Role-based check: Only 'superadmin' or 'admin' are allowed
   if (role !== "superadmin" && (!superAdminId || role !== "admin")) {
     console.log("Unauthorized access attempt:", req.user); // Log for debugging
-    return res
-      .status(403)
-      .json({ success: false, message: "Unauthorized: Access denied." });
+    return res.status(403).json({ success: false, message: "Unauthorized: Access denied." });
   }
 
-  // If the user is a superadmin, use their userId as superAdminId
   const clientSuperAdminId = role === "superadmin" ? createdBy : superAdminId;
 
-  if (!req.file) {
-    return res.status(400).send('No file uploaded');
+  // Check if CSV data is provided in the request body
+  if (!req.body.csvData) {
+    return res.status(400).json({ success: false, message: "No CSV data provided" });
   }
 
-  console.log('File uploaded to:', req.file.path); // Log the file path for debugging
-
   const results = [];
+  const csvData = req.body.csvData;
 
-  // Parse the CSV file and store each row
-  fs.createReadStream(req.file.path)
-    .pipe(csvParser())
-    .on('data', (row) => {
-      results.push(row);
-    })
-    .on('end', async () => {
-      try {
-        // Map and save data to the database
-        const clients = results.map((row) => {
-          return {
-            superAdminId: clientSuperAdminId,
-            createdBy, 
-            name: row.name || 'Default Name',   
-            email: row.email || 'default@example.com',  // Default email if not provided
-            city: row.city || 'City not provided',  // Default city if not provided
-            status: 'active', // You can adjust this as needed
-            phone : row.phone,
-          };
-        });
+  // Parse the CSV data
+  const lines = csvData.split('\n');
+  const headers = lines[0].split(',');
 
-        await ClientModel.insertMany(clients); // Bulk insert data into the database
-        res.status(200).send('CSV data imported successfully');
-      } catch (err) {
-        console.error(err);
-        res.status(500).json({ success: false, message: 'Error importing CSV data', error: err });
-      } finally {
-        // Delete the uploaded CSV file after processing
-        if (fs.existsSync(req.file.path)) {
-          fs.unlinkSync(req.file.path);
-        } else {
-          console.log('File not found for deletion:', req.file.path);
-        }
+  for (let i = 1; i < lines.length; i++) {
+    const row = lines[i].split(',');
+    if (row.length === headers.length) {
+      const rowData = {};
+      for (let j = 0; j < headers.length; j++) {
+        rowData[headers[j]] = row[j];
       }
-    });
-}];
+      results.push(rowData);
+    }
+  }
 
+  try {
+    // Map and save data to the database
+    const clients = results.map((row) => ({
+      superAdminId: clientSuperAdminId,
+      createdBy,
+      name: row.name || 'Default Name',
+      email: row.email || 'default@example.com',
+      city: row.city || 'City not provided',
+      status: 'active',
+      phone: row.phone,
+      category: row.category,
+    }));
 
-
-
-// const fs = require('fs');
-// const csvParser = require('csv-parser');
-// const multer = require('multer');
-// const path = require('path');
-
-
-// // Ensure the 'uploads' folder exists
-// const uploadDir = path.join(__dirname, 'uploads');
-// if (!fs.existsSync(uploadDir)) {
-//   fs.mkdirSync(uploadDir, { recursive: true });
-// }
-
-// // Set up local storage for CSV file uploads
-// const storage = multer.diskStorage({
-//   destination: (req, file, cb) => {
-//     cb(null, uploadDir); // Folder to store uploaded files temporarily
-//   },
-//   filename: (req, file, cb) => {
-//     cb(null, Date.now() + '-' + file.originalname); // Ensure unique filenames
-//   },
-// });
-
-// // Multer configuration for CSV upload
-// const uploadCSV = multer({ 
-//   storage: storage,
-//   fileFilter: (req, file, cb) => {
-//     const ext = path.extname(file.originalname);
-//     if (ext !== '.csv') {
-//       return cb(new Error('Only CSV files are allowed'), false);
-//     }
-//     cb(null, true);
-//   }
-// });
-
-// // Route for uploading CSV file
-// exports.UploadCSVFile = [uploadCSV.single('csvFile'), (req, res) => {
-//   const { _id: superAdminId } = req.user;
-//   if (!superAdminId) {
-//     return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
-//   }
-
-//   if (!req.file) {
-//     return res.status(400).send('No file uploaded');
-//   }
-
-//   console.log('File uploaded to:', req.file.path); // Log the file path for debugging
-
-//   const results = [];
-
-//   // Parse the CSV file and store each row
-//   fs.createReadStream(req.file.path)
-//     .pipe(csvParser())
-//     .on('data', (row) => {
-//       results.push(row);
-//     })
-//     .on('end', async () => {
-//       try {
-//         // Map and save data to the database
-//         const clients = results.map((row) => {
-//           return {
-//             name: row.name || 'Default Name',   // Ensure name is set, otherwise default
-//             email: row.email || 'default@example.com',  // Default email if not provided
-//             city: row.city || 'city not found in your CSV file',  // Default address if not provided
-//           };
-//         });
-
-//         await ClientModel.insertMany(clients); // Bulk insert data into the database
-//         res.status(200).send('CSV data imported successfully');
-//       } catch (err) {
-//         console.error(err);
-//         res.status(500).json({sucess: false, message : 'Error importing CSV data', err});
-//       } finally {
-//         // Delete the uploaded CSV file after processing
-//         if (fs.existsSync(req.file.path)) {
-//           fs.unlinkSync(req.file.path);
-//         } else {
-//           console.log('File not found for deletion:', req.file.path);
-//         }
-//       }
-//     });
-// }];
+    await ClientModel.insertMany(clients); // Bulk insert data into the database
+    res.status(200).json({ success: true, message: 'CSV data imported successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: 'Error importing CSV data', error: err.message });
+  }
+};
