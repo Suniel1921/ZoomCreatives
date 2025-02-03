@@ -67,14 +67,7 @@ const applicationSchema = new mongoose.Schema(
     },
     visaStatus: {
       type: String,
-      enum: [
-        "Under Review",
-        "Under Process",
-        "Waiting for Payment",
-        "Completed",
-        "Approved",
-        "Rejected",
-      ],
+      enum: ["Processing", "Waiting for Payment", "Completed", "Cancelled"],
       required: true,
     },
     handledBy: {
