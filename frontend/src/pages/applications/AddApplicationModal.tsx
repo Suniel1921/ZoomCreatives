@@ -1,4 +1,3 @@
-// ***********add new layout ***********
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -128,7 +127,7 @@ export default function AddApplicationModal({
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_URL}/api/v1/admin/getAllAdmin`
         );
-        setHandlers(response.data.admins); // Assuming the response has an array of handlers
+        setHandlers(response.data.admins);
       } catch (error) {
         console.error("Failed to fetch handlers:", error);
       }

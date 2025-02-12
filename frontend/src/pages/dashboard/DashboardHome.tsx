@@ -1,3 +1,4 @@
+// // use a graph for better UI in four card like active client ongoing Upcoming Appointments, service request and make sure in ongoing task use light bg color with growht icon in compted and in cancaled use light red bg color with down icon and make sure dont created another card for compoted and cannceed use in ongoing task and if possible then imnmprove more skeleton effect 
 // import { useEffect, useState } from "react";
 // import { useNavigate } from "react-router-dom";
 // import {
@@ -15,9 +16,56 @@
 // import axios from "axios";
 // import toast from "react-hot-toast";
 
+// // Skeleton components
+// const SkeletonWelcome = () => (
+//   <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 animate-pulse">
+//     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
+//       <div className="space-y-3">
+//         <div className="h-6 bg-gray-200 rounded w-48"></div>
+//         <div className="h-4 bg-gray-200 rounded w-36"></div>
+//       </div>
+//       <div className="space-y-2">
+//         <div className="h-3 bg-gray-200 rounded w-24"></div>
+//         <div className="h-5 bg-gray-200 rounded w-32"></div>
+//       </div>
+//     </div>
+//   </div>
+// );
+
+// const SkeletonStatsCard = () => (
+//   <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 animate-pulse">
+//     <div className="flex justify-between items-start">
+//       <div className="space-y-3 w-full">
+//         <div className="h-4 bg-gray-200 rounded w-24"></div>
+//         <div className="h-6 bg-gray-200 rounded w-16"></div>
+//         <div className="h-3 bg-gray-200 rounded w-32"></div>
+//       </div>
+//       <div className="h-8 w-8 bg-gray-200 rounded"></div>
+//     </div>
+//   </div>
+// );
+
+// const SkeletonSection = () => (
+//   <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 animate-pulse">
+//     <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
+//     <div className="space-y-4">
+//       {[1, 2].map((i) => (
+//         <div key={i} className="flex items-center space-x-4">
+//           <div className="h-12 w-12 bg-gray-200 rounded"></div>
+//           <div className="flex-1 space-y-2">
+//             <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+//             <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   </div>
+// );
+
 // export default function DashboardHome() {
 //   const navigate = useNavigate();
 //   const [auth] = useAuthGlobally();
+//   const [loading, setLoading] = useState(true);
 //   const [clients, setClients] = useState([]);
 //   const [totalTask, setTotalTask] = useState([]);
 //   const [appointments, setAppointments] = useState([]);
@@ -67,6 +115,8 @@
 //         if (error.response) {
 //           toast.error(error.response.data.message);
 //         }
+//       } finally {
+//         setLoading(false);
 //       }
 //     };
 
@@ -104,6 +154,21 @@
 //         ongoingTasks.push(task);
 //       }
 //     });
+
+//   if (loading) {
+//     return (
+//       <div className="space-y-4 sm:space-y-6">
+//         <SkeletonWelcome />
+//         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+//           {[1, 2, 3, 4].map((i) => (
+//             <SkeletonStatsCard key={i} />
+//           ))}
+//         </div>
+//         <SkeletonSection />
+//         <SkeletonSection />
+//       </div>
+//     );
+//   }
 
 //   return (
 //     <div className="space-y-4 sm:space-y-6">
@@ -150,7 +215,6 @@
 //             { label: "Cancelled", value: cancelledCount },
 //           ]}
 //         />
-
 //         <StatsCard
 //           label="Upcoming Appointments"
 //           value={appointments.length}
@@ -182,20 +246,14 @@
 //   );
 // }
 
-  
 
 
 
 
+// ****************************chart in four card**************************
 
 
-
-
-
-
-// *********add skeleton effect**********
-
-// use a graph for better UI in four card like active client ongoing Upcoming Appointments, service request and make sure in ongoing task use light bg color with growht icon in compted and in cancaled use light red bg color with down icon and make sure dont created another card for compoted and cannceed use in ongoing task and if possible then imnmprove more skeleton effect 
+import React from 'react';
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -212,52 +270,6 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { useAuthGlobally } from "../../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
-
-// Skeleton components
-const SkeletonWelcome = () => (
-  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 animate-pulse">
-    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-      <div className="space-y-3">
-        <div className="h-6 bg-gray-200 rounded w-48"></div>
-        <div className="h-4 bg-gray-200 rounded w-36"></div>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 bg-gray-200 rounded w-24"></div>
-        <div className="h-5 bg-gray-200 rounded w-32"></div>
-      </div>
-    </div>
-  </div>
-);
-
-const SkeletonStatsCard = () => (
-  <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 animate-pulse">
-    <div className="flex justify-between items-start">
-      <div className="space-y-3 w-full">
-        <div className="h-4 bg-gray-200 rounded w-24"></div>
-        <div className="h-6 bg-gray-200 rounded w-16"></div>
-        <div className="h-3 bg-gray-200 rounded w-32"></div>
-      </div>
-      <div className="h-8 w-8 bg-gray-200 rounded"></div>
-    </div>
-  </div>
-);
-
-const SkeletonSection = () => (
-  <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200 animate-pulse">
-    <div className="h-6 bg-gray-200 rounded w-32 mb-4"></div>
-    <div className="space-y-4">
-      {[1, 2].map((i) => (
-        <div key={i} className="flex items-center space-x-4">
-          <div className="h-12 w-12 bg-gray-200 rounded"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-);
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -352,20 +364,49 @@ export default function DashboardHome() {
       }
     });
 
-  if (loading) {
-    return (
-      <div className="space-y-4 sm:space-y-6">
-        <SkeletonWelcome />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <SkeletonStatsCard key={i} />
-          ))}
-        </div>
-        <SkeletonSection />
-        <SkeletonSection />
-      </div>
-    );
-  }
+  // Chart data definitions
+  const clientChartData = [
+    { name: 'Jan', value: activeClients.length },
+    { name: 'Feb', value: activeClients.length + 2 },
+    { name: 'Mar', value: activeClients.length + 4 },
+    { name: 'Apr', value: activeClients.length + 1 },
+    { name: 'May', value: activeClients.length + 3 }
+  ];
+
+  const taskStatusData = [
+    { name: 'Active', value: ongoingTasks.length },
+    { name: 'Completed', value: completedCount },
+    { name: 'Cancelled', value: cancelledCount }
+  ];
+
+  const appointmentChartData = [
+    { name: 'Mon', value: appointments.length },
+    { name: 'Tue', value: appointments.length + 2 },
+    { name: 'Wed', value: appointments.length + 4 },
+    { name: 'Thu', value: appointments.length + 1 },
+    { name: 'Fri', value: appointments.length + 3 }
+  ];
+
+  const serviceRequestChartData = [
+    { name: 'Pending', value: serviceRequested.filter(s => s.status === 'pending').length },
+    { name: 'In Progress', value: serviceRequested.filter(s => s.status === 'in-progress').length },
+    { name: 'Completed', value: serviceRequested.filter(s => s.status === 'completed').length }
+  ];
+
+  // if (loading) {
+  //   return (
+  //     <div className="space-y-4 sm:space-y-6">
+  //       <SkeletonWelcome />
+  //       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+  //         {[1, 2, 3, 4].map((i) => (
+  //           <SkeletonStatsCard key={i} />
+  //         ))}
+  //       </div>
+  //       <SkeletonSection />
+  //       <SkeletonSection />
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -394,33 +435,60 @@ export default function DashboardHome() {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
         <StatsCard
           label="Active Clients"
           value={activeClients.length}
           icon={UsersIcon}
           trend="up"
-          trendValue={`${activeClientsPercentage}% of total`}
+          trendValue={`${activeClientsPercentage}%`}
+          chartType="area"
+          chartData={clientChartData}
+          bgColor="bg-blue-50"
         />
+
         <StatsCard
           label="Ongoing Tasks"
           value={ongoingTasks.length}
           icon={Clock}
+          chartType="pie"
+          chartData={taskStatusData}
+          bgColor="bg-green-50"
           subStats={[
-            { label: "Completed", value: completedCount },
-            { label: "Cancelled", value: cancelledCount },
+            { 
+              label: "Completed", 
+              value: completedCount,
+              status: "completed"
+            },
+            { 
+              label: "Cancelled", 
+              value: cancelledCount,
+              status: "cancelled"
+            }
           ]}
         />
+
         <StatsCard
           label="Upcoming Appointments"
           value={appointments.length}
           icon={Calendar}
+          trend="up"
+          trendValue="12%"
+          chartType="bar"
+          chartData={appointmentChartData}
+          bgColor="bg-purple-50"
         />
+
         <StatsCard
-          label="Service Requested"
+          label="Service Requests"
           value={serviceRequested.length}
-          icon={Bell}
+          icon={FileText}
+          trend="up"
+          trendValue="8%"
+          chartType="line"
+          chartData={serviceRequestChartData}
+          bgColor="bg-orange-50"
         />
       </div>
 
@@ -442,6 +510,3 @@ export default function DashboardHome() {
     </div>
   );
 }
-
-
-

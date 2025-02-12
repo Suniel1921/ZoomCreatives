@@ -1,5 +1,3 @@
-
-//register controller
 const authModel = require("../models/newModel/authModel");
 const bcrypt = require('bcryptjs');
 const  JWT = require ("jsonwebtoken");
@@ -8,6 +6,7 @@ const SuperAdminModel = require("../models/newModel/superAdminModel");
 const nodemailer = require('nodemailer');
 const AdminModel = require("../models/newModel/adminModel");
 const AuditLogController = require('../controllers/auditLogController'); 
+
 
 exports.register = async (req, res) => {
   try {
@@ -186,6 +185,34 @@ exports.login = async (req, res) => {
 
 
 
+
+// Fetch logged-in user details  (for mobile app account page)
+exports.loggedIndUserData = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const role = req.user.role;
+
+    let user = null;
+
+    if (role === "superadmin") user = await SuperAdminModel.findById(userId).select("name email phone profilePhoto");
+    else if (role === "admin") user = await AdminModel.findById(userId).select("name email phone profilePhoto");
+    else if (role === "client") user = await ClientModel.findById(userId).select("name email phone profilePhoto");
+    else user = await authModel.findById(userId).select("name email phone profilePhoto");
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    res.json({ success: true, user });
+  } catch (error) {
+    console.error("Fetch User Error:", error);
+    res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+}
+
+
+
+
 // ***********************FORGOT PASSWORD****************************
 
 //FORGOT PASSOWRD CONTROLLER
@@ -306,10 +333,6 @@ exports.protectedRoute = async (req, res) => {
 exports.admin = (req, res) => {
   res.status(200).json({ ok: true });
 }
-
-
-
-
 
 
 

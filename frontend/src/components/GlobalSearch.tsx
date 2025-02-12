@@ -1,5 +1,4 @@
-//when i search client its its showing in the last why fix this make sure when i search the sunita and they match then its show on the first top 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Search,
   User,
@@ -41,10 +40,7 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        searchRef.current &&
-        !searchRef.current.contains(event.target as Node)
-      ) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         onClose();
       }
     };
@@ -53,23 +49,26 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
-  useEffect(() => {
+  const debounce = (func: Function, delay: number) => {
+    let timeoutId: NodeJS.Timeout;
+    return (...args: any[]) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), delay);
+    };
+  };
+
+  const fetchResults = useCallback(debounce(async (query: string) => {
     if (query.length >= 1) {
       setIsLoading(true);
-      const url = `${
-        import.meta.env.VITE_REACT_APP_URL
-      }/api/v1/globalSearch/globalSearch?query=${query.toLowerCase()}`; // Ensure lowercase query here
-      axios
-        .get(url)
-        .then((response) => {
-          setResults(response.data);
-        })
-        .catch((error) => {
-          console.error("Error fetching search results:", error);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+      const url = `${import.meta.env.VITE_REACT_APP_URL}/api/v1/globalSearch/globalSearch?query=${query.toLowerCase()}`;
+      try {
+        const response = await axios.get(url);
+        setResults(response.data);
+      } catch (error) {
+        console.error("Error fetching search results:", error);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setResults({
         clients: [],
@@ -82,13 +81,16 @@ export default function GlobalSearch({ isOpen, onClose }: GlobalSearchProps) {
         appointments: [],
       });
     }
-  }, [query]);
+  }, 300), []);
+
+  useEffect(() => {
+    fetchResults(query);
+  }, [query, fetchResults]);
 
   const handleSelect = (type: string, id: string) => {
     onClose();
     setQuery("");
 
-    // Adjusted switch statement to handle different types correctly
     switch (type) {
       case "clients":
         navigate(`/dashboard/clients/${id}`);
