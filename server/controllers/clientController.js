@@ -44,13 +44,13 @@ exports.addClient = [
         street,
         building,
         modeOfContact,
-        socialMedia,
+        facebookUrl,
         timeline,
         dateJoined,
       } = req.body;
 
       // Validate required fields
-      const requiredFields = ['name', 'email', 'password', 'phone'];
+      const requiredFields = ['name', 'email', 'password', 'phone',];
       for (let field of requiredFields) {
         if (!req.body[field]) {
           return res.status(400).json({ success: false, message: `${field.charAt(0).toUpperCase() + field.slice(1)} is required.` });
@@ -99,7 +99,7 @@ exports.addClient = [
         street,
         building,
         modeOfContact,
-        socialMedia,
+        facebookUrl,
         timeline,
         dateJoined,
         profilePhoto: profilePhotoUrl,
@@ -109,19 +109,23 @@ exports.addClient = [
       const mailOptions = {
         from: process.env.MYEMAIL, // Sender address
         to: email, // Recipient address
-        subject: 'Your Login Credentials - CRM', // Email subject
+        subject: 'Your Login Credentials - CRM', 
         html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #333;">Welcome to our CRM system!</h2>
           <p>Dear ${name},</p>
-          <p>Welcome to our CRM system!</p>
-          <p>Here are your login credentials:</p>
-          <p><strong>Email:</strong> ${email}</p>
-          <p><strong>Password:</strong> ${password}</p>
-          <p>Please log in to track your application.</p>
-          <p><a href="https://crm.yourcompany.com/client-login" target="_blank">Login Here</a></p>
-          <p>If you did not request this account, please contact support immediately.</p>
-          <br>
-          <p>Best Regards,<br> Zoom Creatives CRM Team</p>
-        `,
+          <p>Your account has been successfully created. Here are your login credentials:</p>
+          <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+            <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
+          </div>
+          <p>For security reasons, we recommend changing your password after your first login.</p>
+          <p><a href="https://crm.zoomcreatives.jp/client-login" style="background-color: #fedc00; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0;">Login to Your Account</a></p>
+          <p>If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+          <hr style="border: 1px solid #eee; margin: 20px 0;">
+          <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply directly to this email.</p>
+        </div>
+      `,
       };
 
       transporter.sendMail(mailOptions, (error, info) => {
@@ -213,22 +217,138 @@ exports.getClientById = async (req, res) => {
 
 
 
-exports.updateClient = [
-  upload.single("profilePhoto"), // Use Multer middleware to handle file upload
-  async (req, res) => {
-    const { _id: superAdminId, role } = req.user
-    if (!superAdminId) {
-      return res.status(403).json({ success: false, message: "Unauthorized: SuperAdmin access required." })
-    }
 
+// exports.updateClient = [
+//   upload.single('profilePhoto'), // Multer middleware for file upload
+//   async (req, res) => {
+//     const { _id: superAdminId, role } = req.user;
+//     if (!superAdminId) {
+//       return res.status(403).json({ success: false, message: 'Unauthorized: SuperAdmin access required.' });
+//     }
+
+//     // Authorization check
+//     if (!role || (role !== 'superadmin' && role !== 'admin' && role !== 'user')) {
+//       return res.status(403).json({ success: false, message: 'Unauthorized: Access denied.' });
+//     }
+
+//     try {
+//       // Find the client by ID
+//       const client = await ClientModel.findById(req.params.id);
+//       if (!client) {
+//         return res.status(404).json({ success: false, message: 'Client not found.' });
+//       }
+
+//       // Destructure the fields from the request body
+//       const {
+//         name,
+//         category,
+//         status,
+//         email,
+//         phone,
+//         nationality,
+//         postalCode,
+//         prefecture,
+//         city,
+//         street,
+//         building,
+//         modeOfContact,
+//         facebookUrl,
+//       } = req.body;
+
+//       // Check if a profile photo is being uploaded
+//       if (req.file) {
+//         try {
+//           const result = await cloudinary.uploader.upload(req.file.path, {
+//             folder: 'client_profiles',
+//             public_id: `profile_${client._id}`,
+//             width: 500,
+//             height: 500,
+//             crop: 'fill',
+//           });
+
+//           // Update client profile photo URL
+//           client.profilePhoto = result.secure_url;
+//         } catch (cloudinaryErr) {
+//           console.error('Cloudinary upload error:', cloudinaryErr);
+//           return res.status(500).json({
+//             success: false,
+//             message: 'Error uploading profile photo to Cloudinary.',
+//             error: cloudinaryErr.message,
+//           });
+//         }
+//       }
+
+//       // Parse modeOfContact 
+//       const parsedModeOfContact = modeOfContact ? JSON.parse(modeOfContact) : client.modeOfContact;
+
+//       // Update other client details
+//       client.name = name || client.name;
+//       client.category = category || client.category;
+//       client.status = status || client.status;
+//       client.email = email || client.email;
+//       client.phone = phone || client.phone;
+//       client.facebookUrl = facebookUrl || client.facebookUrl;
+//       client.nationality = nationality || client.nationality;
+//       client.postalCode = postalCode || client.postalCode;
+//       client.prefecture = prefecture || client.prefecture;
+//       client.city = city || client.city;
+//       client.street = street || client.street;
+//       client.building = building || client.building;
+//       client.modeOfContact = parsedModeOfContact;
+
+
+//       // Save the updated client
+//       const updatedClient = await client.save();
+
+//       // Exclude sensitive fields from the response
+//       const responseClient = updatedClient.toObject();
+//       delete responseClient.password;
+
+//       // Send the response with the updated client data
+//       res.status(200).json({
+//         success: true,
+//         message: 'Client updated successfully.',
+//         updatedClient: responseClient,
+//       });
+//     } catch (err) {
+//       console.error('Error updating client:', err);
+//       res.status(400).json({
+//         success: false,
+//         message: 'Error updating client. Please try again later.',
+//         error: err.message,
+//       });
+//     }
+//   },
+// ];
+
+
+
+
+
+
+
+exports.updateClient = [
+  upload.single("profilePhoto"), // Multer middleware for file upload
+  async (req, res) => {
     try {
+      const { _id: userId, role } = req.user; // Extract user ID and role from token
+      const clientId = req.params.id;
+
       // Find the client by ID
-      const client = await ClientModel.findById(req.params.id)
+      const client = await ClientModel.findById(clientId);
+      console.log('client id is ', clientId)
       if (!client) {
-        return res.status(404).json({ success: false, message: "Client not found." })
+        return res.status(404).json({ success: false, message: "Client not found." });
       }
 
-      // Destructure the fields from the request body
+      // **✅ Authorization Check**
+      // - Admins/Superadmins can update any client.
+      // - Normal users can only update their own profile.
+      if (role !== "superadmin" && role !== "admin" && clientId !== userId) {
+        return res.status(403).json({ success: false, message: "Unauthorized: You can only update your own profile." });
+      }
+
+      // **✅ Destructure the request body**
       const {
         name,
         category,
@@ -242,12 +362,11 @@ exports.updateClient = [
         street,
         building,
         modeOfContact,
-        socialMedia,
-      } = req.body
+        facebookUrl,
+      } = req.body;
 
-      // Check if a profile photo is being uploaded
+      // **✅ Handle Profile Photo Upload (Cloudinary)**
       if (req.file) {
-        // Upload profile photo to Cloudinary
         try {
           const result = await cloudinary.uploader.upload(req.file.path, {
             folder: "client_profiles",
@@ -255,117 +374,70 @@ exports.updateClient = [
             width: 500,
             height: 500,
             crop: "fill",
-          })
+          });
 
-          // Update client profile photo URL
-          client.profilePhoto = result.secure_url
+          client.profilePhoto = result.secure_url; // Update profile photo URL
         } catch (cloudinaryErr) {
-          console.error("Cloudinary upload error:", cloudinaryErr)
+          console.error("Cloudinary upload error:", cloudinaryErr);
           return res.status(500).json({
             success: false,
             message: "Error uploading profile photo to Cloudinary.",
             error: cloudinaryErr.message,
-          })
+          });
         }
       }
 
-      // Update other client details
-      client.name = name || client.name
-      client.category = category || client.category
-      client.status = status || client.status
-      client.email = email || client.email
-      client.phone = phone || client.phone
-      client.nationality = nationality || client.nationality
-      client.postalCode = postalCode || client.postalCode
-      client.prefecture = prefecture || client.prefecture
-      client.city = city || client.city
-      client.street = street || client.street
-      client.building = building || client.building
-      client.modeOfContact = modeOfContact || client.modeOfContact
-      client.socialMedia = socialMedia || client.socialMedia
+      // **✅ Fix `modeOfContact` Parsing**
+      let parsedModeOfContact;
+      try {
+        parsedModeOfContact = modeOfContact ? JSON.parse(modeOfContact) : client.modeOfContact;
+      } catch (err) {
+        parsedModeOfContact = client.modeOfContact; // Fallback if JSON parsing fails
+      }
 
-      // Save the updated client
-      const updatedClient = await client.save()
+      // **✅ Update Other Client Details**
+      client.name = name || client.name;
+      client.category = category || client.category;
+      client.status = status || client.status;
+      client.email = email || client.email;
+      client.phone = phone || client.phone;
+      client.facebookUrl = facebookUrl || client.facebookUrl;
+      client.nationality = nationality || client.nationality;
+      client.postalCode = postalCode || client.postalCode;
+      client.prefecture = prefecture || client.prefecture;
+      client.city = city || client.city;
+      client.street = street || client.street;
+      client.building = building || client.building;
+      client.modeOfContact = parsedModeOfContact;
 
-      // Exclude sensitive fields (like password) from the response
-      const responseClient = updatedClient.toObject()
-      delete responseClient.password
+      // **✅ Save the Updated Client**
+      const updatedClient = await client.save();
 
-      // Send the response with the updated client data
+      // **✅ Remove Password from Response**
+      const responseClient = updatedClient.toObject();
+      delete responseClient.password;
+
+      // **✅ Send Success Response**
       res.status(200).json({
         success: true,
         message: "Client updated successfully.",
         updatedClient: responseClient,
-      })
+      });
     } catch (err) {
-      console.error("Error updating client:", err)
+      console.error("Error updating client:", err);
       res.status(400).json({
         success: false,
         message: "Error updating client. Please try again later.",
-        error: err.message,
-      })
-    }
-  },
-]
-
-
-
-exports.updateClient = [
-  upload.single('profilePhoto'), // Handle single file upload
-  async (req, res) => {
-    const { _id: superAdminId, role } = req.user;
-    if (!superAdminId) {
-      return res.status(403).json({ success: false, message: "Unauthorized: SuperAdmin access required." });
-    }
-
-    try {
-      const client = await ClientModel.findById(req.params.id);
-      if (!client) {
-        return res.status(404).json({ success: false, message: "Client not found." });
-      }
-
-      if (req.file) {
-        // Handle file upload to Cloudinary
-        try {
-          const result = await cloudinary.uploader.upload(req.file.path, {
-            folder: "client_profiles",
-            public_id: `profile_${client._id}`,
-            width: 500,
-            height: 500,
-            crop: "fill",
-          });
-          client.profilePhoto = result.secure_url;
-        } catch (cloudinaryErr) {
-          return res.status(500).json({
-            success: false,
-            message: "Error uploading profile photo to Cloudinary.",
-            error: cloudinaryErr.message,
-          });
-        }
-      }
-
-      // Update other client details
-      client.name = req.body.name || client.name;
-      client.email = req.body.email || client.email;
-      // Add more fields as necessary
-
-      const updatedClient = await client.save();
-
-      // Return updated client data
-      res.status(200).json({
-        success: true,
-        message: "Client updated successfully.",
-        updatedClient: updatedClient,
-      });
-    } catch (err) {
-      res.status(400).json({
-        success: false,
-        message: "Error updating client.",
         error: err.message,
       });
     }
   },
 ];
+
+
+
+
+
 
 
 

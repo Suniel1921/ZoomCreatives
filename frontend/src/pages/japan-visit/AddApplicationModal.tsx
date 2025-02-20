@@ -202,6 +202,7 @@ export default function AddApplicationModal({
                   options={clients.map((client) => ({
                     value: client._id,
                     label: client.name,
+                    clientData: { ...client, profilePhoto: client.profilePhoto }, 
                   }))}
                   value={watch("clientId")}
                   onChange={(value) => {
@@ -354,7 +355,7 @@ export default function AddApplicationModal({
           <div className="space-y-6">
             <h3 className="text-lg font-medium border-b pb-2">Notes</h3>
             <div className="space-y-1">
-              <label className={labelStyles}>Notes *</label>
+              <label className={labelStyles}>Notes </label>
               <textarea
                 {...register("notes")}
                 className={textareaStyles}
