@@ -1,22 +1,24 @@
-import { useState, useEffect } from "react"
-import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download, Calendar } from "lucide-react"
-import Input from "../../components/Input"
-import Button from "../../components/Button"
-import AddEpassportModal from "./AddEpassportModal"
-import EditEpassportModal from "./EditEpassportModal"
-import HisabKitabModal from "../../components/HisabKitabModal"
-import PDFUploadModal from "./PDFUploadModal"
-import PDFPreviewModal from "./PDFPreviewModal"
-import DataTable from "../../components/DataTable"
-import { PREFECTURES } from "../../constants/prefectures"
-import axios from "axios"
-import type { EpassportApplication } from "../../types"
-import toast from "react-hot-toast"
-import { useAuthGlobally } from "../../context/AuthContext"
-import JSZip from "jszip"
-import { saveAs } from "file-saver"
-import DatePicker from "react-datepicker"
-import "react-datepicker/dist/react-datepicker.css"
+import { useState, useEffect } from "react";
+import { CreditCard, Plus, Search, Calculator, Upload, Eye, Download, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import AddEpassportModal from "./AddEpassportModal";
+import EditEpassportModal from "./EditEpassportModal";
+import HisabKitabModal from "../../components/HisabKitabModal";
+import PDFUploadModal from "./PDFUploadModal";
+import PDFPreviewModal from "./PDFPreviewModal";
+import DataTable from "../../components/DataTable";
+import { PREFECTURES } from "../../constants/prefectures";
+import axios from "axios";
+import type { EpassportApplication } from "../../types";
+import toast from "react-hot-toast";
+import { useAuthGlobally } from "../../context/AuthContext";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import ClientTableSkeleton from "../../components/skeletonEffect/ClientTableSkeleton";
+import DeleteConfirmationModal from "../../components/deleteConfirmationModal/DeleteConfirmationModal";
 
 const APPLICATION_TYPES = [
   "Newborn Child",
@@ -25,162 +27,192 @@ const APPLICATION_TYPES = [
   "Damaged Passport",
   "Travel Document",
   "Birth Registration",
-] as const
+] as const;
 
 export default function EpassportPage() {
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedType, setSelectedType] = useState<string>("")
-  const [selectedLocation, setSelectedLocation] = useState<string>("")
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
-  const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false)
-  const [isPDFUploadOpen, setIsPDFUploadOpen] = useState(false)
-  const [isPDFPreviewOpen, setIsPDFPreviewOpen] = useState(false)
-  const [selectedApplication, setSelectedApplication] = useState<any | null>(null)
-  const [epassportApplications, setEpassportApplications] = useState<EpassportApplication[]>([])
-  const [auth] = useAuthGlobally()
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedType, setSelectedType] = useState<string>("");
+  const [selectedLocation, setSelectedLocation] = useState<string>("");
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isHisabKitabOpen, setIsHisabKitabOpen] = useState(false);
+  const [isPDFUploadOpen, setIsPDFUploadOpen] = useState(false);
+  const [isPDFPreviewOpen, setIsPDFPreviewOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedApplication, setSelectedApplication] = useState<EpassportApplication | null>(null);
+  const [applicationToDelete, setApplicationToDelete] = useState<EpassportApplication | null>(null);
+  const [epassportApplications, setEpassportApplications] = useState<EpassportApplication[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1); // New state for current page
+  const [itemsPerPage, setItemsPerPage] = useState(20); // New state for items per page (matching the reference)
+  const [auth] = useAuthGlobally();
 
-  const getAllEPassportApplication = () => {
-    axios
-      .get(`${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/getAllePassports`)
-      .then((response) => {
-        if (response.data.success) {
-          // Sort applications by createdAt date (latest first)
-          const sortedApplications = response.data.data.sort((a: EpassportApplication, b: EpassportApplication) => {
-            return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          })
-          setEpassportApplications(sortedApplications)
-        } else {
-          console.error("API responded with success false:", response.data)
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching ePassport applications:", error)
-      })
-  }
+  // Fetch ePassport applications, sorted by createdAt descending (newest first)
+  const getAllEPassportApplication = async () => {
+    setIsLoading(true);
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/getAllePassports`
+      );
+      if (response.data.success) {
+        const applications = Array.isArray(response.data.data) ? response.data.data : [];
+        // Sort applications by createdAt in descending order (newest first)
+        const sortedApplications = applications.sort((a, b) => {
+          const dateA = new Date(a.createdAt || 0).getTime();
+          const dateB = new Date(b.createdAt || 0).getTime();
+          return dateB - dateA; // Newest first
+        });
+        setEpassportApplications(sortedApplications);
+      } else {
+        console.error("API responded with success false:", response.data);
+        setEpassportApplications([]);
+      }
+    } catch (error) {
+      console.error("Error fetching ePassport applications:", error);
+      toast.error("Failed to fetch ePassport applications");
+      setEpassportApplications([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    getAllEPassportApplication()
-  }, [])
+    getAllEPassportApplication();
+  }, []);
 
   const filteredApplications = epassportApplications.filter((app) => {
-    const searchLower = searchQuery.toLowerCase()
+    const searchLower = searchQuery.toLowerCase();
     const matchesSearch =
       (app.clientId?.name?.toLowerCase().includes(searchLower) ?? false) ||
-      (app.applicationType?.toLowerCase().includes(searchLower) ?? false)
+      (app.applicationType?.toLowerCase().includes(searchLower) ?? false);
+    const matchesType = !selectedType || app.applicationType === selectedType;
+    const matchesLocation = !selectedLocation || (app.ghumtiService && app.prefecture === selectedLocation);
+    return matchesSearch && matchesType && matchesLocation;
+  });
 
-    const matchesType = !selectedType || app.applicationType === selectedType
-    const matchesLocation = !selectedLocation || (app.ghumtiService && app.prefecture === selectedLocation)
+  // Pagination logic
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = filteredApplications.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredApplications.length / itemsPerPage);
 
-    return matchesSearch && matchesType && matchesLocation
-  })
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
 
   const formatPhoneForViber = (phone: string | undefined | null): string => {
-    if (!phone) return ""
-    return phone.replace(/\D/g, "")
-  }
+    if (!phone) return "";
+    return phone.replace(/\D/g, "");
+  };
 
-  const handleDelete = async (_id: string) => {
-    if (window.confirm("Are you sure you want to delete this application?")) {
-      try {
-        const response = await axios.delete(
-          `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteEpassport/${_id}`,
-        )
-        if (response?.data?.success) {
-          toast.success("Application deleted successfully!")
-          setEpassportApplications((prev) => prev.filter((app) => app._id !== _id))
-        } else {
-          toast.error("Failed to delete the application.")
-        }
-      } catch (error) {
-        console.error("Error deleting application:", error)
-        toast.error("An error occurred while deleting the application.")
+  // Handle initiating deletion
+  const initiateDelete = (application: EpassportApplication) => {
+    setApplicationToDelete(application);
+    setIsDeleteModalOpen(true);
+  };
+
+  // Handle confirmed deletion
+  const handleDelete = async () => {
+    if (!applicationToDelete) return;
+
+    try {
+      const response = await axios.delete(
+        `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/deleteEpassport/${applicationToDelete._id}`
+      );
+      if (response?.data?.success) {
+        toast.success("Application deleted successfully!");
+        setIsDeleteModalOpen(false);
+        setApplicationToDelete(null);
+        getAllEPassportApplication(); // Refresh list, newest first
+      } else {
+        toast.error("Failed to delete the application.");
       }
+    } catch (error) {
+      console.error("Error deleting application:", error);
+      toast.error("An error occurred while deleting the application.");
     }
-  }
+  };
 
   const handleDownload = async (clientFiles: string[]) => {
     try {
       if (!clientFiles || clientFiles.length === 0) {
-        toast.error("No files available for download.")
-        return
+        toast.error("No files available for download.");
+        return;
       }
 
-      const zip = new JSZip()
-
+      const zip = new JSZip();
       const fetchPromises = clientFiles.map(async (fileUrl, index) => {
         try {
-          const response = await fetch(fileUrl)
-          if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`)
-          const blob = await response.blob()
-          const fileName = fileUrl.split("/").pop() || `file_${index + 1}.pdf`
-          zip.file(fileName, blob)
+          const response = await fetch(fileUrl);
+          if (!response.ok) throw new Error(`Failed to fetch ${fileUrl}`);
+          const blob = await response.blob();
+          const fileName = fileUrl.split("/").pop() || `file_${index + 1}.pdf`;
+          zip.file(fileName, blob);
         } catch (error: any) {
-          console.warn(`Skipping ${fileUrl}: ${error.message}`)
+          console.warn(`Skipping ${fileUrl}: ${error.message}`);
         }
-      })
+      });
 
-      await Promise.all(fetchPromises)
-
-      const zipBlob = await zip.generateAsync({ type: "blob" })
-      saveAs(zipBlob, "documents.zip")
-      toast.success("Files downloaded successfully!")
+      await Promise.all(fetchPromises);
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, "documents.zip");
+      toast.success("Files downloaded successfully!");
     } catch (error) {
-      console.error("Download failed:", error)
-      toast.error("Error downloading files.")
+      console.error("Download failed:", error);
+      toast.error("Error downloading files.");
     }
-  }
+  };
 
   const calculatePaymentStatus = (amount: number, paidAmount: number, discount: number) => {
-    const totalDue = amount - paidAmount - discount
-    return totalDue <= 0 ? "Paid" : "Due"
-  }
+    const totalDue = amount - paidAmount - discount;
+    return totalDue <= 0 ? "Paid" : "Due";
+  };
 
-  const handleDateChange = async (deadline: deadline, application: EpassportApplication) => {
+  const handleDateChange = async (deadline: Date, application: EpassportApplication) => {
     try {
       const response = await axios.put(
         `${import.meta.env.VITE_REACT_APP_URL}/api/v1/ePassport/updateEpassport/${application._id}`,
-        { createdAt: deadline.toISOString() },
-      )
+        { createdAt: deadline.toISOString() }
+      );
       if (response.data.success) {
-        toast.success("Date updated successfully!")
-        getAllEPassportApplication() // Refresh data
+        toast.success("Date updated successfully!");
+        getAllEPassportApplication(); // Refresh data, newest first
       } else {
-        toast.error("Failed to update the date.")
+        toast.error("Failed to update the date.");
       }
     } catch (error) {
-      console.error("Error updating date:", error)
-      toast.error("An error occurred while updating the date.")
+      console.error("Error updating date:", error);
+      toast.error("An error occurred while updating the date.");
     }
-  }
+  };
 
   const columns = [
     {
       key: "clientName",
       label: "Client",
       render: (value: string, item: EpassportApplication) => {
-        const clientName = item.clientId?.name || "Unknown Name"
+        const clientName = item.clientId?.name || "Unknown Name";
         return (
           <div>
             <p className="font-medium">{clientName}</p>
           </div>
-        )
+        );
       },
     },
     {
       key: "clientPhone",
       label: "Contact",
       render: (value: string | undefined | null, item: EpassportApplication) => {
-        const phone = item.clientId?.phone
-        if (!phone) return <span className="text-gray-400">No contact</span>
-        const formattedPhone = formatPhoneForViber(phone)
+        const phone = item.clientId?.phone;
+        if (!phone) return <span className="text-gray-400">No contact</span>;
+        const formattedPhone = formatPhoneForViber(phone);
         return formattedPhone ? (
           <a href={`viber://chat?number=${formattedPhone}`} className="text-brand-black hover:text-brand-yellow">
             {phone}
           </a>
         ) : (
           <span className="text-gray-400">Invalid number</span>
-        )
+        );
       },
     },
     {
@@ -199,8 +231,8 @@ export default function EpassportPage() {
             value === "Completed"
               ? "bg-green-100 text-green-700"
               : value === "Cancelled"
-                ? "bg-red-100 text-red-700"
-                : "bg-blue-100 text-blue-700"
+              ? "bg-red-100 text-red-700"
+              : "bg-blue-100 text-blue-700"
           }`}
         >
           {value}
@@ -216,7 +248,7 @@ export default function EpassportPage() {
       key: "paymentStatus",
       label: "Payment",
       render: (_: string, item: EpassportApplication) => {
-        const status = calculatePaymentStatus(item.amount, item.paidAmount, item.discount)
+        const status = calculatePaymentStatus(item.amount, item.paidAmount, item.discount);
         return (
           <span
             className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -225,7 +257,7 @@ export default function EpassportPage() {
           >
             {status}
           </span>
-        )
+        );
       },
     },
     {
@@ -234,7 +266,6 @@ export default function EpassportPage() {
       render: (value: string, item: EpassportApplication) => {
         const date = new Date(value);
         const formattedDate = date.toLocaleDateString("en-CA"); // "yy/mm/dd" format
-    
         return (
           <div className="flex items-center gap-2">
             <span>{formattedDate}</span>
@@ -244,7 +275,6 @@ export default function EpassportPage() {
               onClick={() => {
                 setSelectedApplication(item);
                 setIsEditModalOpen(true);
-                handleDateChange;
               }}
             >
               <Calendar className="h-4 w-4" />
@@ -253,11 +283,10 @@ export default function EpassportPage() {
         );
       },
     },
-    
     {
       key: "id",
       label: "Actions",
-      render: (_: string, item: any) => (
+      render: (_: string, item: EpassportApplication) => (
         <div className="flex justify-end gap-2">
           {item.clientFiles && item.clientFiles.length > 0 ? (
             <>
@@ -273,8 +302,8 @@ export default function EpassportPage() {
                 variant="outline"
                 size="sm"
                 onClick={() => {
-                  setSelectedApplication(item)
-                  setIsPDFPreviewOpen(true)
+                  setSelectedApplication(item);
+                  setIsPDFPreviewOpen(true);
                 }}
                 title="Preview File"
               >
@@ -286,43 +315,40 @@ export default function EpassportPage() {
               variant="outline"
               size="sm"
               onClick={() => {
-                setSelectedApplication(item)
-                setIsPDFUploadOpen(true)
+                setSelectedApplication(item);
+                setIsPDFUploadOpen(true);
               }}
               title="Upload PDF"
             >
               <Upload className="h-4 w-4" />
             </Button>
           )}
-
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              setSelectedApplication(item)
-              setIsHisabKitabOpen(true)
+              setSelectedApplication(item);
+              setIsHisabKitabOpen(true);
             }}
             title="View HisabKitab"
           >
             <Calculator className="h-4 w-4" />
           </Button>
-
           <Button
             variant="outline"
             size="sm"
             onClick={() => {
-              setSelectedApplication(item)
-              setIsEditModalOpen(true)
+              setSelectedApplication(item);
+              setIsEditModalOpen(true);
             }}
           >
             Edit
           </Button>
-
           {auth.user.role === "superadmin" && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleDelete(item._id)}
+              onClick={() => initiateDelete(item)}
               className="text-red-500 hover:text-red-700"
             >
               Delete
@@ -331,7 +357,7 @@ export default function EpassportPage() {
         </div>
       ),
     },
-  ]
+  ];
 
   return (
     <div>
@@ -388,7 +414,60 @@ export default function EpassportPage() {
       </div>
 
       <div className="mt-6">
-        <DataTable columns={columns} data={filteredApplications} searchable={false} />
+        {isLoading ? (
+          <ClientTableSkeleton />
+        ) : (
+          <>
+            <DataTable columns={columns} data={currentItems} searchable={false} />
+            <div className="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+              <div className="flex-1 flex justify-between sm:hidden">
+                <Button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  variant="outline"
+                >
+                  Previous
+                </Button>
+                <Button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  variant="outline"
+                >
+                  Next
+                </Button>
+              </div>
+              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
+                    <span className="font-medium">{Math.min(indexOfLastItem, filteredApplications.length)}</span> of{" "}
+                    <span className="font-medium">{filteredApplications.length}</span> results
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    variant="outline"
+                    size="sm"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    Previous
+                  </Button>
+                  <Button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    variant="outline"
+                    size="sm"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       <AddEpassportModal
@@ -402,8 +481,8 @@ export default function EpassportPage() {
           <EditEpassportModal
             isOpen={isEditModalOpen}
             onClose={() => {
-              setIsEditModalOpen(false)
-              setSelectedApplication(null)
+              setIsEditModalOpen(false);
+              setSelectedApplication(null);
             }}
             getAllEPassportApplication={getAllEPassportApplication}
             application={selectedApplication}
@@ -412,8 +491,8 @@ export default function EpassportPage() {
           <HisabKitabModal
             isOpen={isHisabKitabOpen}
             onClose={() => {
-              setIsHisabKitabOpen(false)
-              setSelectedApplication(null)
+              setIsHisabKitabOpen(false);
+              setSelectedApplication(null);
             }}
             application={selectedApplication}
           />
@@ -421,19 +500,19 @@ export default function EpassportPage() {
           <PDFUploadModal
             isOpen={isPDFUploadOpen}
             onClose={() => {
-              setIsPDFUploadOpen(false)
-              setSelectedApplication(null)
+              setIsPDFUploadOpen(false);
+              setSelectedApplication(null);
             }}
             application={selectedApplication}
             getAllEPassportApplication={getAllEPassportApplication}
           />
 
-          {selectedApplication && selectedApplication.clientFiles && (
+          {selectedApplication.clientFiles && (
             <PDFPreviewModal
               isOpen={isPDFPreviewOpen}
               onClose={() => {
-                setIsPDFPreviewOpen(false)
-                setSelectedApplication(null)
+                setIsPDFPreviewOpen(false);
+                setSelectedApplication(null);
               }}
               fileUrls={selectedApplication.clientFiles}
               fileName={selectedApplication.clientFiles[0]?.split("/").pop() || "document.pdf"}
@@ -441,11 +520,14 @@ export default function EpassportPage() {
           )}
         </>
       )}
+
+      {/* Moved DeleteConfirmationModal outside the selectedApplication block */}
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        applicationName={applicationToDelete?.clientId?.name || "Unknown"}
+      />
     </div>
-  )
+  );
 }
-
-
-
-
-
