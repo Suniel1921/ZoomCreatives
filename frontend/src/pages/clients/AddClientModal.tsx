@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Upload, Plus, Eye, EyeOff, Key } from "lucide-react";
 import Button from "../../components/Button";
 import Input from "../../components/Input";
-import { useStore } from "../../store";
 import { fetchJapaneseAddress } from "../../services/addressService";
 import { countries } from "../../utils/countries";
 import { createClientSchema } from "../../utils/clientValidation";
@@ -19,14 +18,17 @@ const categories: ClientCategory[] = [
   "Student Visa Applicant",
   "Epassport Applicant",
   "Japan Visa",
-  "General Consultation",
+  'Graphic Design & Printing',
+   'Web Design & Seo',
+   'Birth Registration',
+   'Documentation Support',
+   'Other'
 ];
 
 const optionalCategories: ClientCategory[] = [
   "Document Translation",
   "Epassport Applicant",
   "Japan Visa",
-  "General Consultation",
 ];
 
 interface AddClientModalProps {
@@ -170,7 +172,7 @@ export default function AddClientModal({
       formData.append("city", data.address.city);
       formData.append("street", data.address.street);
       formData.append("building", data.address.building);
-      formData.append("facebookUrl", data.facebookUrl || ""); // Ensure it's always sent, even if empty
+      formData.append("facebookUrl", data.facebookUrl || "");
       formData.append("modeOfContact", JSON.stringify(data.modeOfContact));
       formData.append("timeline", JSON.stringify(data.address.timeline || []));
 
