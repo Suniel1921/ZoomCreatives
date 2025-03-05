@@ -85,6 +85,7 @@ export default function AddAppointmentModal({
   const recurringFrequency = watch("recurringFrequency");
   const recurringEndDate = watch("recurringEndDate");
 
+
   //get all client
   useEffect(() => {
     if (isOpen) {
@@ -173,7 +174,7 @@ export default function AddAppointmentModal({
                 options={clients.map((client) => ({
                   value: client._id,
                   label: client.name,
-                  clientData: { ...client, profilePhoto: client.profilePhoto }, 
+                  clientData: { ...client, profilePhoto: client.profilePhoto },
                 }))}
                 value={watch("clientId")}
                 onChange={(value) => {
