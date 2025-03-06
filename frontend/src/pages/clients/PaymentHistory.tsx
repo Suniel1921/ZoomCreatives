@@ -17,14 +17,23 @@ const PaymentHistory = ({ selectedClientId }) => {
         if (Array.isArray(modelData)) {
           modelData.forEach((item) => {
             // Ensure the clientId matches the selectedClientId
-            if (item.clientId?._id === selectedClientId) {              
+            if (item.clientId?._id === selectedClientId) {
+              let totalAmount = 0;
+
+              // Special handling for Visa Application (application model)
+              if (modelKey === "application" && item.payment) {
+                totalAmount = (item.payment.visaApplicationFee || 0) + (item.payment.translationFee || 0);
+              } else {
+                // For other models, use amount or payment.total
+                totalAmount = item.amount || item.payment?.total || item.total || 0;
+              }
+
               if (item) {
                 allPayments.push({
                   date: item.createdAt,
                   type: item.type || `${modelKey.charAt(0).toUpperCase() + modelKey.slice(1)} Service`,
-                  total: item?.total || item?.amount || item.payment?.total || 0,
+                  total: totalAmount,
                   paidAmount: item.paidAmount || item.payment?.paidAmount || 0,
-                  // paymentStatus: item.status || item.paymentStatus,
                   paymentStatus: item.paymentStatus,
                   model: modelKey, // Track the model the payment came from
                 });
@@ -63,7 +72,6 @@ const PaymentHistory = ({ selectedClientId }) => {
           {paymentHistory.length > 0 ? (
             paymentHistory.map((payment, index) => {
               const paymentDate = isValidDate(payment.date) ? format(new Date(payment.date), "MMM d, yyyy") : "Invalid Date";
-              const modelName = payment.model ? payment.model.charAt(0).toUpperCase() + payment.model.slice(1) : "Unknown Model"; // Ensure model is valid
               return (
                 <tr key={index}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{paymentDate}</td>
@@ -75,19 +83,23 @@ const PaymentHistory = ({ selectedClientId }) => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${payment.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>
+                    <span
+                      className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        payment.paymentStatus === "Paid" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
                       {payment.paymentStatus}
                     </span>
                   </td>
-                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {modelName}
-                  </td> */}
+                  {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{payment.model}</td> */}
                 </tr>
               );
             })
           ) : (
             <tr>
-              <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">No payments found for this client.</td>
+              <td colSpan="5" className="px-6 py-4 text-center text-sm text-gray-500">
+                No payments found for this client.
+              </td>
             </tr>
           )}
         </tbody>

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Users as UsersIcon,
@@ -14,8 +14,7 @@ import ServiceRequestsList from "./components/ServiceRequestsList";
 import { useAuthGlobally } from "../../context/AuthContext";
 import axios from "axios";
 import toast from "react-hot-toast";
-import  { SkeletonSection, SkeletonStatsCard, SkeletonWelcome } from "../../components/skeletonEffect/DashboardHomeSkeleton";
-
+import { SkeletonSection, SkeletonStatsCard, SkeletonWelcome } from "../../components/skeletonEffect/DashboardHomeSkeleton";
 
 export default function DashboardHome() {
   const navigate = useNavigate();
@@ -27,9 +26,6 @@ export default function DashboardHome() {
   const [serviceRequested, setServiceRequested] = useState([]);
   const [superAdminName, setSuperAdminName] = useState({});
 
-
-  
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -39,24 +35,16 @@ export default function DashboardHome() {
               `${import.meta.env.VITE_REACT_APP_URL}/api/v1/client/getClient`
             ),
             axios.get(
-              `${
-                import.meta.env.VITE_REACT_APP_URL
-              }/api/v1/appointment/fetchAllModelData`
+              `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/fetchAllModelData`
             ),
             axios.get(
-              `${
-                import.meta.env.VITE_REACT_APP_URL
-              }/api/v1/appointment/getAllAppointment`
+              `${import.meta.env.VITE_REACT_APP_URL}/api/v1/appointment/getAllAppointment`
             ),
             axios.get(
-              `${
-                import.meta.env.VITE_REACT_APP_URL
-              }/api/v1/serviceRequest/getAllRequestedService`
+              `${import.meta.env.VITE_REACT_APP_URL}/api/v1/serviceRequest/getAllRequestedService`
             ),
             axios.get(
-              `${
-                import.meta.env.VITE_REACT_APP_URL
-              }/api/v1/superAdmin/getSuperAdmin/${auth.user.id}`
+              `${import.meta.env.VITE_REACT_APP_URL}/api/v1/superAdmin/getSuperAdmin/${auth.user.id}`
             ),
           ]);
 
@@ -81,6 +69,7 @@ export default function DashboardHome() {
     fetchData();
   }, [auth.user.id]);
 
+  // Get active clients and this month's active clients
   const activeClients = clients.filter((c) => c?.status === "active");
   const totalClients = clients.length;
   const activeClientsPercentage =
@@ -88,7 +77,50 @@ export default function DashboardHome() {
       ? ((activeClients.length / totalClients) * 100).toFixed(1)
       : "0";
 
-  // Categorize tasks
+  // Get this month's active clients and growth rate
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const thisMonthActiveClients = activeClients.filter(client => {
+    const clientDate = new Date(client.createdAt);
+    return clientDate.getMonth() === currentMonth && clientDate.getFullYear() === currentYear;
+  });
+
+  const lastMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+  const lastMonthYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+  const lastMonthActiveClients = activeClients.filter(client => {
+    const clientDate = new Date(client.createdAt);
+    return clientDate.getMonth() === lastMonth && clientDate.getFullYear() === lastMonthYear;
+  });
+
+  const monthlyGrowthRate = lastMonthActiveClients.length > 0
+    ? (((thisMonthActiveClients.length - lastMonthActiveClients.length) / lastMonthActiveClients.length) * 100).toFixed(1)
+    : "0";
+
+  // Generate monthly active clients data for the past 6 months
+  const getLast6MonthsData = () => {
+    const data = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthClients = activeClients.filter(client => {
+        const clientDate = new Date(client.createdAt);
+        return clientDate.getMonth() === date.getMonth() && 
+               clientDate.getFullYear() === date.getFullYear();
+      });
+      data.push({
+        name: date.toLocaleString('default', { month: 'short' }),
+        value: monthClients.length,
+        total: clients.filter(client => {
+          const clientDate = new Date(client.createdAt);
+          return clientDate.getMonth() === date.getMonth() && 
+                 clientDate.getFullYear() === date.getFullYear();
+        }).length
+      });
+    }
+    return data;
+  };
+
+  // Categorize tasks and calculate completion rate
   const ongoingTasks = [];
   let completedCount = 0;
   let cancelledCount = 0;
@@ -113,37 +145,83 @@ export default function DashboardHome() {
       }
     });
 
+  const totalTaskCount = ongoingTasks.length + completedCount + cancelledCount;
+  const taskCompletionRate = totalTaskCount > 0
+    ? ((completedCount / totalTaskCount) * 100).toFixed(1)
+    : "0";
 
+  // Generate appointments data by day of week
+  const getAppointmentsByDay = () => {
+    const daysOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const appointmentCounts = new Array(7).fill(0);
+    
+    appointments.forEach(appointment => {
+      const date = new Date(appointment.date);
+      appointmentCounts[date.getDay()]++;
+    });
 
-  // Chart data definitions
-  const clientChartData = [
-    { name: 'Jan', value: activeClients.length },
-    { name: 'Feb', value: activeClients.length + 2 },
-    { name: 'Mar', value: activeClients.length + 4 },
-    { name: 'Apr', value: activeClients.length + 1 },
-    { name: 'May', value: activeClients.length + 3 }
-  ];
+    return daysOfWeek.map((day, index) => ({
+      name: day,
+      value: appointmentCounts[index],
+      average: Math.round(appointments.length / 7)
+    }));
+  };
 
+  // Enhanced service request data with trends
+  const getServiceRequestData = () => {
+    const last14Days = Array.from({ length: 14 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (13 - i));
+      return date.toISOString().split('T')[0];
+    });
+
+    const timelineData = last14Days.map(date => {
+      const dayRequests = serviceRequested.filter(req => 
+        new Date(req.createdAt).toISOString().split('T')[0] === date
+      );
+
+      const total = dayRequests.length;
+      const completed = dayRequests.filter(r => r.status === 'completed').length;
+      const pending = dayRequests.filter(r => r.status === 'pending').length;
+      const inProgress = dayRequests.filter(r => r.status === 'in-progress').length;
+
+      return {
+        name: new Date(date).toLocaleDateString('default', { weekday: 'short' }),
+        total,
+        completed,
+        pending,
+        inProgress,
+      };
+    });
+
+    const currentPending = serviceRequested.filter(r => r.status === 'pending').length;
+    const currentInProgress = serviceRequested.filter(r => r.status === 'in-progress').length;
+    const currentCompleted = serviceRequested.filter(r => r.status === 'completed').length;
+
+    const completionRate = serviceRequested.length > 0
+      ? ((currentCompleted / serviceRequested.length) * 100).toFixed(1)
+      : "0";
+
+    return {
+      timelineData,
+      stats: {
+        pending: currentPending,
+        inProgress: currentInProgress,
+        completed: currentCompleted,
+        completionRate
+      }
+    };
+  };
+
+  // Chart data
+  const clientChartData = getLast6MonthsData();
   const taskStatusData = [
     { name: 'Active', value: ongoingTasks.length },
     { name: 'Completed', value: completedCount },
     { name: 'Cancelled', value: cancelledCount }
   ];
-
-  const appointmentChartData = [
-    { name: 'Mon', value: appointments.length },
-    { name: 'Tue', value: appointments.length + 2 },
-    { name: 'Wed', value: appointments.length + 4 },
-    { name: 'Thu', value: appointments.length + 1 },
-    { name: 'Fri', value: appointments.length + 3 }
-  ];
-
-  const serviceRequestChartData = [
-    { name: 'Pending', value: serviceRequested.filter(s => s.status === 'pending').length },
-    { name: 'In Progress', value: serviceRequested.filter(s => s.status === 'in-progress').length },
-    { name: 'Completed', value: serviceRequested.filter(s => s.status === 'completed').length }
-  ];
-
+  const appointmentChartData = getAppointmentsByDay();
+  const serviceRequestData = getServiceRequestData();
 
   if (loading) {
     return (
@@ -157,8 +235,6 @@ export default function DashboardHome() {
         <SkeletonSection />
         <SkeletonSection />
       </div>
-
-      
     );
   }
 
@@ -196,16 +272,30 @@ export default function DashboardHome() {
           value={activeClients.length}
           icon={UsersIcon}
           trend="up"
-          trendValue={`${activeClientsPercentage}%`}
+          trendValue={`${monthlyGrowthRate}%`}
           chartType="area"
           chartData={clientChartData}
-          bgColor="bg-blue-50"
+          bgColor="#fcda00"
+          subStats={[
+            {
+              label: "This Month",
+              value: thisMonthActiveClients.length,
+              status: "active"
+            },
+            {
+              label: "Total Clients",
+              value: totalClients,
+              status: "total"
+            }
+          ]}
         />
 
         <StatsCard
-          label="Ongoing Tasks"
+          label="Tasks Overview"
           value={ongoingTasks.length}
           icon={Clock}
+          trend="up"
+          trendValue={`${taskCompletionRate}%`}
           chartType="pie"
           chartData={taskStatusData}
           bgColor="bg-green-50"
@@ -228,10 +318,22 @@ export default function DashboardHome() {
           value={appointments.length}
           icon={Calendar}
           trend="up"
-          trendValue="12%"
+          trendValue={`${((appointments.length / 7) * 100).toFixed(1)}%`}
           chartType="bar"
           chartData={appointmentChartData}
-          bgColor="bg-purple-50"
+          bgColor="#FCDA00"
+          subStats={[
+            {
+              label: "Daily Average",
+              value: Math.round(appointments.length / 7),
+              status: "active"
+            },
+            {
+              label: "This Week",
+              value: appointments.length,
+              status: "total"
+            }
+          ]}
         />
 
         <StatsCard
@@ -239,10 +341,22 @@ export default function DashboardHome() {
           value={serviceRequested.length}
           icon={FileText}
           trend="up"
-          trendValue="8%"
-          chartType="line"
-          chartData={serviceRequestChartData}
+          trendValue={`${serviceRequestData.stats.completionRate}%`}
+          chartType="graph"
+          chartData={serviceRequestData.timelineData}
           bgColor="bg-orange-50"
+          subStats={[
+            {
+              label: "Pending",
+              value: serviceRequestData.stats.pending,
+              status: "pending"
+            },
+            {
+              label: "In Progress",
+              value: serviceRequestData.stats.inProgress,
+              status: "in-progress"
+            }
+          ]}
         />
       </div>
 
@@ -264,7 +378,4 @@ export default function DashboardHome() {
     </div>
   );
 }
-
-
-
 
