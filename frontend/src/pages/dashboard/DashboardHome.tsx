@@ -245,7 +245,7 @@ export default function DashboardHome() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div>
             <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Welcome back, {superAdminName.name}!
+              Welcome back, {superAdminName.name}! <span>👋</span>
             </h1>
             <p className="mt-1 text-sm sm:text-base text-gray-500">
               Here's what's happening today
