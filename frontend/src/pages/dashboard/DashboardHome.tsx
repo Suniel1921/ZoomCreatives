@@ -243,14 +243,14 @@ export default function DashboardHome() {
       {/* Welcome Section */}
       <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
-          <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-              Welcome back, {superAdminName.name}! <span>👋</span>
-            </h1>
-            <p className="mt-1 text-sm sm:text-base text-gray-500">
-              Here's what's happening today
-            </p>
-          </div>
+     <div>
+  <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+    Welcome back, {superAdminName.name}! <span className="inline-block animate-wave">👋</span>
+  </h1>
+  <p className="mt-1 text-sm sm:text-base text-gray-500">
+    Here's what's happening today
+  </p>
+</div>
           <div className="text-left sm:text-right">
             <p className="text-xs sm:text-sm text-gray-500">Today's Date</p>
             <p className="text-base sm:text-lg font-semibold">
@@ -378,4 +378,5 @@ export default function DashboardHome() {
     </div>
   );
 }
+
 
