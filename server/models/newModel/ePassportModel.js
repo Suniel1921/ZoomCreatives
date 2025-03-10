@@ -111,3 +111,12 @@ epassportSchema.pre("save", function (next) {
 
 const ePassportModel = mongoose.model("ePassportModel", epassportSchema);
 module.exports = ePassportModel;
+
+
+
+
+
+
+
+
+
