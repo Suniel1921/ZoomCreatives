@@ -229,12 +229,10 @@ exports.getClients = async (req, res) => {
 
 
 /**
- * Retrieves a client by ID
+ * Retrieves a client by ID  (this is controller is for mobile app fetching client data based on Id)
  */
 exports.getClientById = async (req, res) => {
   try {
-    const { _id: superAdminId, role } = req.user;
-    checkAuthorization(role, superAdminId, superAdminId);
 
     const client = await ClientModel.findById(req.params.id).lean();
     if (!client) {
@@ -254,13 +252,13 @@ exports.getClientById = async (req, res) => {
 };
 
 /**
- * Updates an existing client
+ * Updates an existing client (this is controller is also used in our zoom app)
  */
 exports.updateClient = [
   upload.single('profilePhoto'),
   async (req, res) => {
     try {
-      const { _id: userId, role } = req.user;
+      // const { _id: userId, role } = req.user;
       const clientId = req.params.id;
 
       const client = await ClientModel.findById(clientId);
@@ -268,7 +266,7 @@ exports.updateClient = [
         return res.status(404).json({ success: false, message: 'Client not found.' });
       }
 
-      checkAuthorization(role, client.superAdminId, userId, clientId);
+      // checkAuthorization(role, client.superAdminId, userId, clientId);
 
       const {
         name, category, status, email, phone, nationality, postalCode,
