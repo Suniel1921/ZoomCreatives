@@ -29,6 +29,7 @@ const appBannerRoute = require ('./routes/newRoutes/appBannerRoute');
 const notificationRoute = require ('./routes/newRoutes/notificationRoute');
 const { initRedisClient } = require('./config/redisClient');
 const webSocketService = require('./config/webSocketService');
+const chatRoute = require ('./routes/newRoutes/chatRoute');
 
 // Load environment variables
 dotenv.config();
@@ -63,9 +64,6 @@ app.use(logMiddleware);
 // Database Connection
 dbConnection();
 
-// Initialize Redis client
-
-// initRedisClient();
 
 
 // Routes
@@ -89,6 +87,7 @@ app.use('/api/v1/callLogs', callLogsRoute);
 app.use('/api/v1/campaign', campaignRoute);
 app.use('/api/v1/appBanner', appBannerRoute);
 app.use('/api/v1/notify', notificationRoute);
+app.use('/api/v1/chat', chatRoute);
 
 // Default Route
 app.get('/', (req, res) => {
