@@ -33,21 +33,35 @@ const sendCredentialsEmail = async (email, name, password) => {
     to: email,
     subject: 'Your Login Credentials - CRM',
     html: `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">Welcome to our CRM system!</h2>
-        <p>Dear ${name},</p>
-        <p>Your account has been successfully created. Here are your login credentials:</p>
-        <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
-          <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-          <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
-        </div>
-        <p>For security reasons, we recommend changing your password after your first login.</p>
-        <p><a href="https://crm.zoomcreatives.jp/client-login" style="background-color: #FEDC00; color: #000; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 20px 0;">Login to Your Account</a></p>
-        <p>If you have any questions, contact our support team.</p>
-        <hr style="border: 1px solid #eee; margin: 20px 0;">
-        <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #333;">Welcome to our CRM system!</h2>
+      <p>Dear ${name},</p>
+      <p>Your account has been successfully created. Here are your login credentials:</p>
+      <div style="background-color: #f5f5f5; padding: 15px; border-radius: 5px; margin: 20px 0;">
+        <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
+        <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
       </div>
-    `,
+      <p>For security reasons, we recommend changing your password after your first login.</p>
+
+      <!-- Buttons Section -->
+      <div style="text-align: center; margin: 20px 0;">
+        <a href="https://apps.apple.com/jp/app/zoom-creatives/id6742648724?l=en-US" 
+          style="background-color: #fcda00; color: #232323; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px; margin-bottom: 10px;">
+          📲 Download Our App (Recommended)
+        </a>
+        <br>
+        <a href="https://crm.zoomcreatives.jp/client-login" 
+          style="background-color: #6c757d; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 14px;">
+          🔗 Login Without App
+        </a>
+      </div>
+
+      <p>If you have any questions, contact our support team.</p>
+      <hr style="border: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
+    </div>
+  `,
+
   };
 
   try {
@@ -204,27 +218,24 @@ exports.addClient = [
  */
 exports.getClients = async (req, res) => {
   try {
-    const { _id, role, superAdminId } = req.user;
-    checkAuthorization(role, superAdminId, _id);
+      // Check user role
+      const userRole = req.user.role;
+      if (!['admin', 'superadmin'].includes(userRole)) {
+          return res.status(403).json({ success: false, error: 'Forbidden: Insufficient permissions' });
+      }
 
-    const query = role === 'superadmin'
-      ? { superAdminId: _id }
-      : { $or: [{ createdBy: _id }, { superAdminId }] };
-
-    const clients = await ClientModel.find(query)
-      .populate('createdBy', 'name email')
-      .lean();
-
-    return res.status(200).json({ success: true, clients });
+      const clients = await ClientModel.find().lean();
+      const normalizedClients = clients.map(client => ({
+          ...client,
+          fullName: client.fullName || client.name || 'Unknown Client',
+      }));
+      res.json({ success: true, clients: normalizedClients });
   } catch (error) {
-    console.error('Error fetching clients:', error.message);
-    return res.status(500).json({
-      success: false,
-      message: 'Internal Server Error',
-      error: error.message,
-    });
+      console.error('Error fetching clients:', error.message);
+      res.status(500).json({ success: false, error: 'Failed to fetch clients' });
   }
 };
+
 
 
 
