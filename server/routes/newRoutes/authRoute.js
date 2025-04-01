@@ -2,10 +2,10 @@
 
 const express = require ("express");
 const router = express.Router();
-const controller = require("../controllers/authController");
-const { requireLogin, isAdmin } = require("../middleware/newMiddleware/authMiddleware");
-const upload = require('../config/multerConfig');
-const { loginRateLimiter } = require("../middleware/newMiddleware/loginRateLimiter");
+const controller = require("../../controllers/authController");
+const { requireLogin, isAdmin } = require("../../middleware/newMiddleware/authMiddleware");
+const upload = require('../../config/multerConfig');
+const { loginRateLimiter } = require("../../middleware/newMiddleware/loginRateLimiter");
 
 
 router.post('/register', controller.register);
