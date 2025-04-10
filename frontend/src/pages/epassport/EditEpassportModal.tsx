@@ -28,6 +28,7 @@ export default function EditEpassportModal({
   } = useForm({
     defaultValues: {
       ...application,
+      mobileNo: application.clientId?.phone || application.mobileNo || "N/A",
       date: new Date(application.date),
       deadline: new Date(application.deadline),
       amount: application.amount || 0,
@@ -50,6 +51,29 @@ export default function EditEpassportModal({
   const discount = watch("discount") || 0;
   const dueAmount = amount - (paidAmount + discount);
   const applicationType = watch("applicationType");
+
+  // Sync form values with updated application prop
+  useEffect(() => {
+    setValue("mobileNo", application.clientId?.phone || application.mobileNo || "N/A");
+    setValue("contactChannel", application.contactChannel);
+    setValue("applicationType", application.applicationType);
+    setValue("applicationStatus", application.applicationStatus);
+    setValue("dataSentStatus", application.dataSentStatus);
+    setValue("handledBy", application.handledBy);
+    setValue("date", new Date(application.date));
+    setValue("deadline", new Date(application.deadline));
+    setValue("ghumtiService", application.ghumtiService);
+    setValue("prefecture", application.prefecture);
+    setValue("amount", application.amount || 0);
+    setValue("paidAmount", application.paidAmount || 0);
+    setValue("discount", application.discount || 0);
+    setValue("dueAmount", application.dueAmount || 0);
+    setValue("paymentStatus", application.paymentStatus || "Due");
+    setValue("paymentMethod", application.paymentMethod);
+    setValue("remarks", application.remarks);
+    setValue("additionalClients", application.additionalClients || []);
+    setShowPrefecture(application.ghumtiService);
+  }, [application, setValue]);
 
   useEffect(() => {
     const fetchHandlers = async () => {
@@ -115,7 +139,11 @@ export default function EditEpassportModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <Input value={application.mobileNo || "N/A"} className="mt-1 bg-gray-50" disabled />
+                <Input
+                  {...register("mobileNo")}
+                  className="mt-1 bg-gray-50"
+                  disabled
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Contact Channel</label>
