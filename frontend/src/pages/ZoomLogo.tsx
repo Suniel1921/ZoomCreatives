@@ -1,7 +1,3 @@
-"use client"
-
-import * as React from "react";
-
 export default function ZoomLogo() {
   return (
     <svg
@@ -85,14 +81,15 @@ export default function ZoomLogo() {
         m
       </text>
 
-      {/* Text: CREATIVES */}
+      {/* Text: CREATIVES - centered below the "m" */}
       <text
-        x="360"
-        y="95"
+        x="380"
+        y="120"
         fontSize="22"
         fontWeight="normal"
         fill="white"
         fontFamily="Arial, Helvetica, sans-serif"
+        textAnchor="middle"
       >
         CREATIVES
       </text>
