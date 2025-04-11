@@ -6,8 +6,8 @@ export default function ZoomLogo() {
       viewBox="0 0 500 130"
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Background */}
-      <rect width="100%" height="100%" fill="black" />
+      {/* Background removed for transparency */}
+      {/* <rect width="100%" height="100%" fill="black" /> */}
 
       {/* Text: z */}
       <text
@@ -83,7 +83,7 @@ export default function ZoomLogo() {
 
       {/* Text: CREATIVES - centered below the "m" */}
       <text
-        x="380"
+        x="335"
         y="120"
         fontSize="22"
         fontWeight="normal"
