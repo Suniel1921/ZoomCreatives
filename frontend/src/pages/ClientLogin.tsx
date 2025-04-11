@@ -1,4 +1,6 @@
-import { useState, useEffect } from "react";
+"use client";
+
+import { useState, useEffect, useRef } from "react"; // Added useRef here
 import { useNavigate } from "react-router-dom";
 import { Lock, Mail, Eye, EyeOff } from "lucide-react";
 import axios from "axios";
@@ -6,8 +8,117 @@ import toast from "react-hot-toast";
 import { useAuthGlobally } from "../context/AuthContext";
 import CreateClientAccountModal from "./components/CreateClientAccountModal";
 import ForgotPasswordModal from "./ForgotPasswordModal";
+import ZoomLogo from "./ZoomLogo";
+import * as React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const API_URL = import.meta.env.VITE_REACT_APP_URL;
+
+// AnimatedWordCycle Component
+interface AnimatedWordCycleProps {
+  words: string[];
+  interval?: number;
+  className?: string;
+}
+
+function AnimatedWordCycle({
+  words,
+  interval = 5000,
+  className = "",
+}: AnimatedWordCycleProps) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [width, setWidth] = useState("auto");
+  const measureRef = useRef<HTMLDivElement>(null);
+
+  // Get the width of the current word
+  useEffect(() => {
+    if (measureRef.current) {
+      const elements = measureRef.current.children;
+      if (elements.length > currentIndex) {
+        const newWidth = elements[currentIndex].getBoundingClientRect().width;
+        setWidth(`${newWidth}px`);
+      }
+    }
+  }, [currentIndex]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentIndex((prevIndex) => (prevIndex + 1) % words.length);
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [interval, words.length]);
+
+  const containerVariants = {
+    hidden: {
+      y: -20,
+      opacity: 0,
+      filter: "blur(8px)",
+    },
+    visible: {
+      y: 0,
+      opacity: 1,
+      filter: "blur(0px)",
+      transition: {
+        duration: 0.4,
+        ease: "easeOut",
+      },
+    },
+    exit: {
+      y: 20,
+      opacity: 0,
+      filter: "blur(8px)",
+      transition: {
+        duration: 0.3,
+        ease: "easeIn",
+      },
+    },
+  };
+
+  return (
+    <>
+      <div
+        ref={measureRef}
+        aria-hidden="true"
+        className="absolute opacity-0 pointer-events-none"
+        style={{ visibility: "hidden" }}
+      >
+        {words.map((word, i) => (
+          <span key={i} className={`font-bold ${className}`}>
+            {word}
+          </span>
+        ))}
+      </div>
+
+      <motion.span
+        className="relative inline-block"
+        animate={{
+          width,
+          transition: {
+            type: "spring",
+            stiffness: 150,
+            damping: 15,
+            mass: 1.2,
+          },
+        }}
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={currentIndex}
+            className={`inline-block font-bold ${className}`}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            style={{ whiteSpace: "nowrap" }}
+          >
+            {words[currentIndex]}
+          </motion.span>
+        </AnimatePresence>
+      </motion.span>
+    </>
+  );
+}
 
 export default function ClientLogin() {
   const [email, setEmail] = useState("");
@@ -22,12 +133,10 @@ export default function ClientLogin() {
   const navigate = useNavigate();
   const [auth, setAuthGlobally] = useAuthGlobally();
 
-  // Check authentication and handle redirects
   useEffect(() => {
     const checkAuth = async () => {
       const tokenData = localStorage.getItem("token");
       if (!tokenData) {
-        // No token exists, show login page
         setIsCheckingAuth(false);
         return;
       }
@@ -38,13 +147,11 @@ export default function ClientLogin() {
           throw new Error("Invalid token structure");
         }
 
-        // Verify token validity with the server
         const response = await axios.get(`${API_URL}/api/v1/auth/verify-token`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (response.data.success) {
-          // Token is valid, redirect based on role
           const redirectPath =
             user.role === "user" ? "/client-portal" : "/dashboard";
           navigate(redirectPath, { replace: true });
@@ -53,17 +160,15 @@ export default function ClientLogin() {
         }
       } catch (err) {
         console.error("Auth check error:", err);
-        // Clear invalid/expired token and reset auth state
         localStorage.removeItem("token");
         setAuthGlobally({ user: null, role: null, token: null });
         delete axios.defaults.headers.common["Authorization"];
-        setIsCheckingAuth(false); // Show login page
+        setIsCheckingAuth(false);
       }
     };
 
     checkAuth();
 
-    // Fallback timeout
     const timeout = setTimeout(() => {
       if (isCheckingAuth) {
         console.warn("Auth check timed out, showing login page");
@@ -71,12 +176,11 @@ export default function ClientLogin() {
         setAuthGlobally({ user: null, role: null, token: null });
         setIsCheckingAuth(false);
       }
-    }, 5000); // Increased to 5s to allow server check
+    }, 5000);
 
     return () => clearTimeout(timeout);
   }, [navigate, setAuthGlobally]);
 
-  // Handle login form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -135,18 +239,22 @@ export default function ClientLogin() {
     );
   }
 
-  // Rest of your component (login UI) remains the same
   return (
     <div className="flex min-h-screen flex-col md:flex-row">
       {/* Branding Section */}
       <div className="w-full md:w-1/2 bg-black text-white flex flex-col justify-center items-center p-6 md:px-10">
         <div className="max-w-lg text-center py-8 md:py-0">
           <div className="flex justify-center items-center gap-4 mb-8 md:mb-14">
-            <img className="w-96" src="./logo2.png" alt="Zoom CRM Logo" />
+            <ZoomLogo />
           </div>
           <div className="hidden md:block">
             <p className="text-[37px] font-medium mb-8">
-              Transform Your Business with Smart Solutions
+              <AnimatedWordCycle
+                words={["Transform", "Grow", "Streamline", "Succeed"]}
+                interval={3000}
+                className="text-yellow-400"
+              />{" "}
+              Your Business with Smart Solutions
             </p>
             <p className="text-lg leading-relaxed text-gray-400">
               Streamline your customer relationships, boost productivity, and
@@ -284,6 +392,7 @@ export default function ClientLogin() {
     </div>
   );
 }
+
 
 
 
